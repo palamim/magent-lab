@@ -17,11 +17,9 @@ export const judgePlans = async (
   planA: string,
   planB: string,
 ): Promise<ComparativeEvaluation> => {
-  let comparativeEvaluation: ComparativeEvaluation | null = null;
-
   const prompt = planJudgePrompt(direction, conventions, planA, planB);
-
   const messages: Anthropic.MessageParam[] = [{ role: 'user', content: prompt }];
+
   const message = await client.messages.create({
     max_tokens: MAX_JUDGE_TOKENS,
     model: ANTHROPIC_MODELS.CLAUDE_HAIKU_4_5,
@@ -34,13 +32,10 @@ export const judgePlans = async (
     (block): block is Anthropic.ToolUseBlock =>
       block.type === 'tool_use' && block.name === 'submit_comparative_evaluation',
   );
-  if (submitBlock) {
-    comparativeEvaluation = executeSubmitComparativeEvaluation(submitBlock.input);
+
+  if (!submitBlock) {
+    throw new Error('Judge did not call submit_comparative_evaluation.');
   }
 
-  if (!comparativeEvaluation) {
-    throw new Error('Judge answered without using submit_comparative_evaluation.');
-  }
-
-  return comparativeEvaluation;
+  return executeSubmitComparativeEvaluation(submitBlock.input);
 };

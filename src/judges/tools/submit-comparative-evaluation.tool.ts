@@ -1,37 +1,86 @@
 import type Anthropic from '@anthropic-ai/sdk';
-import type { ComparativeEvaluation } from '@/judges/types/common.types';
+
+import type { ComparativeEvaluation, Verdict } from '@/judges/types/common.types';
+
+const VERDICTS: Verdict[] = ['A', 'B', 'tie'];
+const isVerdict = (v: unknown): v is Verdict => VERDICTS.includes(v as Verdict);
 
 // ── declaration (faces the model) ──
 export const submitComparativeEvaluationTool: Anthropic.Tool = {
   name: 'submit_comparative_evaluation',
   description:
-    'Submit the comparative evaluation. Use `winner` to return the winner plan (or tie) and use `reasoning` to say why. Call this exactly once with your evaluation.',
+    'Submit the comparative evaluation. First judge BOTH plans on EACH criterion individually (which plan that single criterion favors), then give your holistic winner. Call this exactly once.',
   input_schema: {
     type: 'object',
     properties: {
-      reasoning: {
-        type: 'string',
+      criteria: {
+        type: 'array',
         description:
-          'Your full per-criterion comparison. Reason through all criteria for BOTH plans FIRST. Go through each criterion in 1-2 sentences per plan, then decide',
+          'One entry per criterion, in the order given. For each, compare both plans on THAT criterion only.',
+        items: {
+          type: 'object',
+          properties: {
+            criterion: {
+              type: 'string',
+              description: 'The name of the criterion being judged.',
+            },
+            reasoning: {
+              type: 'string',
+              description: 'Compare both plans on THIS criterion only, in 1-2 sentences.',
+            },
+            favors: {
+              type: 'string',
+              enum: ['A', 'B', 'tie'],
+              description: 'Which plan this single criterion favors: A, B, or tie.',
+            },
+          },
+          required: ['criterion', 'reasoning', 'favors'],
+        },
       },
-      winner: {
+      holisticWinner: {
         type: 'string',
         enum: ['A', 'B', 'tie'],
-        description: 'The winner, following directly from your reasoning above.',
+        description:
+          'Your overall winner, weighing the criteria above by importance (a single decisive flaw can outweigh several minor advantages). This follows from your per-criterion judgments but is your holistic call.',
+      },
+      summary: {
+        type: 'string',
+        description: 'One sentence naming the decisive factor behind your holistic winner.',
       },
     },
-    required: ['reasoning', 'winner'], // reasoning BEFORE winner in the order
+    required: ['criteria', 'holisticWinner', 'summary'],
   },
 };
 
-// ── execution (faces the machine) ──
+// ── execution (faces the machine) — fail loud, never fabricate ──
 export const executeSubmitComparativeEvaluation = (raw: unknown): ComparativeEvaluation => {
-  const input = raw as Partial<ComparativeEvaluation>;
-  if (input.winner !== 'A' && input.winner !== 'B' && input.winner !== 'tie') {
-    throw new Error(`Judge returned invalid winner: ${JSON.stringify(input.winner)}`);
+  const input = raw as Partial<{
+    criteria: unknown;
+    holisticWinner: unknown;
+    summary: unknown;
+  }>;
+
+  if (!Array.isArray(input.criteria) || input.criteria.length === 0) {
+    throw new Error('Judge returned no per-criterion judgments.');
   }
-  if (!input.reasoning) {
-    throw new Error('Judge returned no reasoning.');
+
+  const criteria = input.criteria.map((c, i) => {
+    const entry = c as Partial<{ criterion: string; reasoning: string; favors: unknown }>;
+    if (!entry.criterion || !entry.reasoning) {
+      throw new Error(`Criterion judgment ${i} is missing criterion or reasoning.`);
+    }
+    if (!isVerdict(entry.favors)) {
+      throw new Error(`Criterion judgment ${i} has invalid favors: ${JSON.stringify(entry.favors)}`);
+    }
+    return { criterion: entry.criterion, reasoning: entry.reasoning, favors: entry.favors };
+  });
+
+  if (!isVerdict(input.holisticWinner)) {
+    throw new Error(`Judge returned invalid holisticWinner: ${JSON.stringify(input.holisticWinner)}`);
   }
-  return { winner: input.winner, reasoning: input.reasoning };
+  if (!input.summary || typeof input.summary !== 'string') {
+    throw new Error('Judge returned no summary.');
+  }
+
+  return { criteria, holisticWinner: input.holisticWinner, summary: input.summary };
 };

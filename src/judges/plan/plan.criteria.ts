@@ -15,7 +15,7 @@ export const planCriteria = {
     'Each task names targetFiles and contextFiles that, together with its description and instructions, give the executor enough to execute it correctly without guessing.',
 
   'Is executable':
-    'Each task can be completed in a single executor run, touching roughly 1-3 files. No task is so large or vague that an executor would fail or stall on it.',
+    'Each task can be completed in a single executor run. This means: touches roughly 1-3 files, AND asks for a bounded number of concrete changes — not a single task bundling many distinct sub-goals (e.g. "build four panels, each with its own layout, styling, and data wiring") that would overload one run. A task overloaded with many sub-goals is as risky as one touching too many files.',
 
   'Is functional':
     'The plan does not leave broken or half-wired work — a half-rendered component, or a function called before it exists. Work that is complete but not yet used (because it is wired up in a later task) is fine; work that is actively broken is not.',

@@ -1,0 +1,25 @@
+{
+  "frontier": "Make the direction review moment feel legible, informative, and worthy of trust — the user should understand what they're approving before they approve it.",
+  "goal": "Transform DirectionView from a minimal rationale dump into a clear, multi-panel brief that shows the proposed direction, what will change, and invites deliberate approval.",
+  "type": "feat",
+  "slug": "enrich-direction-view",
+  "dependencies": [],
+  "tasks": [
+    {
+      "id": 1,
+      "slug": "redesign-direction-view",
+      "type": "feat",
+      "description": "Rebuild DirectionView with richer layout: header with goal, rationale panel, direction preview panel, changeset panels for docs, and footer with approval controls",
+      "instructions": "Rewrite src/modules/main-panel/direction.view.tsx to:\n\n1. Create a three-column or multi-section layout with clear visual hierarchy:\n   - Header section: Display the direction proposal's goal (extracted from context or as a section)\n   - Main section: Show the rationale with better typography and spacing (not raw <pre>)\n   - Preview section: Show the proposed direction text (direction.direction) in a formatted panel\n   - Changes section: List the docs/conventions that will be written (direction.docs and direction.conventions)\n\n2. Style each section as a distinct card with:\n   - Title/label (e.g., \"Rationale\", \"Direction\", \"Changes\")\n   - Content area with proper typography (not <pre> blocks — use line-height, word-wrap, proper colors)\n   - Subtle background and border to show elevation (var(--surface-raised))\n\n3. Footer with approval controls:\n   - Approve button (primary, var(--accent))\n   - Discard button (secondary, red)\n   - Error message if any\n   - Acting state reflected in button appearance\n\n4. Use the design language:\n   - Colors from globals.css (foreground, foreground-muted, surface-raised, border)\n   - Tailwind for layout, spacing, flex\n   - No hardcoded colors\n   - Restraint: let the content breathe, use whitespace\n\n5. Data to display from DirectionProposal:\n   - direction.rationale (main motivation for this direction)\n   - direction.direction (the actual direction text to show)\n   - direction.conventions (the conventions document — show that it will be written)\n   - direction.docs (array of DocDiff; show each will be updated)\n\nThe goal is to make it feel like a briefing, not a raw dump. The user should see what they're approving, understand why, and know what documents will change.",
+      "targetFiles": [
+        "/Users/leonardo/Documents/code/projects/magent-ui/src/modules/main-panel/direction.view.tsx"
+      ],
+      "contextFiles": [
+        "/Users/leonardo/Documents/code/projects/magent-ui/src/model/direction.model.ts",
+        "/Users/leonardo/Documents/code/projects/magent-ui/app/globals.css",
+        "/Users/leonardo/Documents/code/projects/magent-ui/src/components/thinking-dots.tsx"
+      ],
+      "status": "pending"
+    }
+  ]
+}
