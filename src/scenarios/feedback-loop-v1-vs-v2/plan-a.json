@@ -1,0 +1,95 @@
+{
+  "frontier": "Deepen the quality of the feedback loop so agents receive signal-dense, actionable feedback that makes them smarter with use",
+  "goal": "Make feedback signal denser and more actionable by adding categorization and summaries so agents can extract patterns from past decisions",
+  "type": "feat",
+  "slug": "structure-feedback-categories",
+  "dependencies": [],
+  "tasks": [
+    {
+      "id": 1,
+      "slug": "define-feedback-types",
+      "type": "feat",
+      "description": "Define feedback category schema and extraction types",
+      "instructions": "Create a new file `src/agents/types/feedback.types.ts` that defines the feedback categorization schema. This file should export:\n\n1. An enum `FeedbackCategory` with values: TASK_STRUCTURE, CODE_STYLE, ARCHITECTURE, LOGIC, PERFORMANCE, TESTING, DOCUMENTATION, OTHER\n\n2. An interface `CategorizedFeedback` extending `FeedbackEntry` that adds:\n   - `categories: FeedbackCategory[]` — which categories apply to this feedback\n   - `summary: string` — 1-2 sentence summary of the key feedback\n   - `extractedPatterns: string[]` — any patterns or anti-patterns mentioned (e.g., 'avoid inline comments', 'use descriptive variable names')\n\n3. An interface `FeedbackSummary` with:\n   - `byCategory: Record<FeedbackCategory, { count: number; examples: string[] }>` — counts and representative quotes per category\n   - `topPatterns: { pattern: string; frequency: number }[]` — most common patterns mentioned across all feedback\n   - `recentDecisions: Array<{ proposal: string; decision: Decision; category: FeedbackCategory }>` — last 5 decisions grouped by category\n\n4. A type `ExtractedAgentFeedback` with:\n   - `raw: string` — the original flat feedback text\n   - `categorized: CategorizedFeedback[]` — parsed and categorized entries\n   - `summary: FeedbackSummary` — aggregated summary\n\nUse the conventions in the codebase: PascalCase for types, single quotes, 2-space indents, always use semicolons.",
+      "targetFiles": ["src/agents/types/feedback.types.ts"],
+      "contextFiles": ["src/agents/types/common.types.ts"],
+      "status": "pending"
+    },
+    {
+      "id": 2,
+      "slug": "implement-feedback-categorizer",
+      "type": "feat",
+      "description": "Implement feedback parsing and categorization logic",
+      "instructions": "Create `src/lib/feedback-categorizer.ts` that exports these functions:\n\n1. `categorizeEntry(entry: FeedbackEntry): CategorizedFeedback` — given a raw feedback entry, return categorized version with:\n   - `categories` inferred from the proposal and comment text (look for keywords like 'style', 'structure', 'type', 'logic', 'test', 'perf', 'doc')\n   - `summary` extracted by taking the first 1-2 sentences of the comment, or a synthesized summary if none\n   - `extractedPatterns` by looking for phrases like 'avoid X', 'prefer Y', 'use Z pattern', or any instruction-like language\n   - Mark category OTHER if no clear match\n\n2. `extractAgentFeedback(feedbackText: string): ExtractedAgentFeedback` — given the flat feedback text (as currently loaded), parse and return:\n   - `raw`: the original feedbackText\n   - `categorized`: array of categorized entries parsed from the JSONL\n   - `summary`: call aggregateFeedback() on the categorized entries\n\n3. `aggregateFeedback(categorized: CategorizedFeedback[]): FeedbackSummary` — given categorized entries, return:\n   - `byCategory`: count occurrences per category, collect up to 2 example comments\n   - `topPatterns`: find all extractedPatterns, count occurrences, return top 5 sorted by frequency\n   - `recentDecisions`: last 5 entries, each showing proposal, decision, and primary category\n\nKeep functions small and focused. Categorization should be heuristic-based (keyword matching is fine), not AI-based. Add comments explaining the logic. Use the module style of `src/lib/` files (named exports, pure functions, no semicolons at end of lines).\n\nFor parsing JSONL feedback text: the text is already a formatted bullet-list (from loadFeedback), so you'll need to reverse-engineer it back into structured entries. Write a helper `parseFeedbackText(text: string): FeedbackEntry[]` that reads the bullet lines and reconstructs the original JSON structure as best it can. If a line can't be parsed cleanly, log a warning but continue.",
+      "targetFiles": ["src/lib/feedback-categorizer.ts"],
+      "contextFiles": [
+        "src/agents/types/common.types.ts",
+        "src/agents/types/feedback.types.ts",
+        "src/project/feedback.ts"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": 3,
+      "slug": "extend-feedback-storage",
+      "type": "feat",
+      "description": "Add categorized feedback persistence to feedback.ts",
+      "instructions": "Update `src/project/feedback.ts` to add new functions:\n\n1. `saveCategorizedFeedback(dir: string, agent: Agent, entry: CategorizedFeedback): void` — save a categorized feedback entry to a new file `feedback-categorized.jsonl` in the agent's directory. Same path structure as feedback.jsonl.\n\n2. `loadCategorizedFeedback(dir: string, agent: Agent): CategorizedFeedback[]` — load and return the array of all categorized entries from feedback-categorized.jsonl. Return empty array if file doesn't exist.\n\n3. `loadAndSummarizeFeedback(dir: string, agent: Agent): FeedbackSummary` — convenience function that loads categorized entries and returns their summary. Call aggregateFeedback from the categorizer. If no categorized feedback exists, return a default empty summary.\n\n4. Keep the existing loadFeedback(), saveFeedback(), appendCommentToLast() functions unchanged — they are still the source of truth.\n\nBoth feedback.jsonl and feedback-categorized.jsonl will coexist: the original JSONL remains the persistent store, and feedback-categorized.jsonl is a derived cache. Later tasks will regenerate the categorized version as needed.\n\nUse the existing file style (with semicolons, imports with `import type` where applicable).",
+      "targetFiles": ["src/project/feedback.ts"],
+      "contextFiles": [
+        "src/agents/types/common.types.ts",
+        "src/agents/types/feedback.types.ts",
+        "src/lib/feedback-categorizer.ts"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": 4,
+      "slug": "wire-categorized-feedback-to-executor",
+      "type": "feat",
+      "description": "Include categorized feedback summary in Executor prompts",
+      "instructions": "Update `src/services/run-verified-execution/build-prompt.ts` to:\n\n1. Import `loadAndSummarizeFeedback` from `@/project/feedback`\n2. In `buildPrompt()`, call `loadAndSummarizeFeedback(dir, Agent.EXECUTOR)` to get the feedback summary\n3. Create a new helper function `formatFeedbackSummary(summary: FeedbackSummary): string` that formats the summary for inclusion in the prompt. Format it as:\n   ```\n   FEEDBACK SUMMARY\n   ================\n   [If no feedback] (none)\n   [Otherwise]\n   Top patterns from past work:\n   - [pattern]: [frequency] times\n   - [pattern]: [frequency] times\n   ...\n   Recent decisions by category:\n   - [category]: [decision] on \"[proposal]\" — [summary]\n   - [category]: [decision] on \"[proposal]\" — [summary]\n   ...\n   ```\n4. In `buildImplementPrompt()`, add a new section before or after the PAST FEEDBACK section that includes the formatted summary. Call it `--- FEEDBACK PATTERNS (extracted from past decisions) ---`\n5. In `buildRefinePrompt()`, do the same — include the patterns section\n6. Update the prompt text in both functions to reference the new patterns section\n\nKeep changes minimal — you're just inserting one new section into existing prompts. Don't rewrite the whole prompt.",
+      "targetFiles": ["src/services/run-verified-execution/build-prompt.ts"],
+      "contextFiles": [
+        "src/project/feedback.ts",
+        "src/agents/types/feedback.types.ts",
+        "src/lib/feedback-categorizer.ts"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": 5,
+      "slug": "wire-categorized-feedback-to-planner",
+      "type": "feat",
+      "description": "Include categorized feedback in Planner prompts",
+      "instructions": "Update `src/agents/planner/planner.prompt.ts` to enhance both `freshPlanPrompt()` and `advancePrompt()` with extracted feedback summaries:\n\n1. Add a parameter `plannerSummary: FeedbackSummary` to `freshPlanPrompt()`. Import the type from feedback.types.\n2. Add a parameter `executorSummary: FeedbackSummary` to `freshPlanPrompt()`.\n3. Before the existing `--- YOUR FEEDBACK (past plans...) ---` section, add a new section that shows both summaries:\n   ```\n   --- PLANNER FEEDBACK SUMMARY (extracted patterns from past plans) ---\n   [Executor's feedback summary formatted similarly to the Executor prompt]\n\n   --- EXECUTOR FEEDBACK SUMMARY (extracted patterns from past implementations) ---\n   [Executor's feedback summary]\n   ```\n4. Do the same for `advancePrompt()` — add the same two parameters and insert the summaries section.\n5. Update the docstrings/comments to explain what these new sections contain\n6. Create a helper `formatFeedbackSummaryForPlanner(summary: FeedbackSummary, agent: 'planner' | 'executor'): string` that formats summaries for the Planner (slightly different from the Executor version — more emphasis on decision patterns, fewer implementation details).\n\nDo NOT update the callers of these functions yet — that's a separate task. Just update the prompts themselves to accept the new parameters.",
+      "targetFiles": ["src/agents/planner/planner.prompt.ts"],
+      "contextFiles": ["src/agents/types/feedback.types.ts", "src/lib/feedback-categorizer.ts"],
+      "status": "pending"
+    },
+    {
+      "id": 6,
+      "slug": "wire-feedback-summaries-to-planner-agent",
+      "type": "feat",
+      "description": "Update Planner agent to load and pass feedback summaries to prompts",
+      "instructions": "Update `src/agents/planner/planner.agent.ts` to:\n\n1. Import `loadAndSummarizeFeedback` from `@/project/feedback` and `Agent` from `@/agents/types/common.types`\n2. In the Planner agent run function (wherever it calls `freshPlanPrompt()` or `advancePrompt()`), before calling those functions:\n   - Call `loadAndSummarizeFeedback(dir, Agent.PLANNER)` to get plannerSummary\n   - Call `loadAndSummarizeFeedback(dir, Agent.EXECUTOR)` to get executorSummary\n3. Pass these summaries to both prompt functions as the new parameters\n4. If loading either summary fails or returns null, use an empty/default FeedbackSummary instead\n\nKeep the changes minimal — find exactly where the prompt functions are called and add the summary-loading logic just before.",
+      "targetFiles": ["src/agents/planner/planner.agent.ts"],
+      "contextFiles": [
+        "src/agents/planner/planner.prompt.ts",
+        "src/project/feedback.ts",
+        "src/agents/types/feedback.types.ts"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": 7,
+      "slug": "regenerate-categorized-feedback-on-keep-discard",
+      "type": "chore",
+      "description": "Regenerate categorized feedback whenever feedback is saved",
+      "instructions": "Update `src/project/feedback.ts` to automatically regenerate the categorized feedback whenever a new entry is saved:\n\n1. In `saveFeedback()`, after appending to feedback.jsonl:\n   - Load all entries from feedback.jsonl\n   - For each entry, call `categorizeEntry()` from the categorizer (import it)\n   - Write all categorized entries to feedback-categorized.jsonl\n\n2. Do the same in `appendCommentToLast()` — after updating the last entry, regenerate feedback-categorized.jsonl\n\nThis ensures that categorized feedback is always in sync with the raw feedback. The categorizer does the work; feedback.ts just orchestrates when it runs.\n\nNo changes to the public API of feedback.ts — this is all internal regeneration.",
+      "targetFiles": ["src/project/feedback.ts"],
+      "contextFiles": ["src/lib/feedback-categorizer.ts"],
+      "status": "pending"
+    }
+  ]
+}

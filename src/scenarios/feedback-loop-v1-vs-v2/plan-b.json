@@ -1,0 +1,66 @@
+{
+  "frontier": "Deepen the quality of the loop so the system gets smarter with use by making feedback signal-dense and actionable, not just longer",
+  "goal": "Capture structured decision metadata in executor feedback (verification results, decision type, refinement categories) so agents can extract real patterns instead of inferring taste from comments",
+  "type": "feat",
+  "slug": "enrich-executor-feedback",
+  "dependencies": [],
+  "tasks": [
+    {
+      "id": 1,
+      "slug": "extend-feedback-schema",
+      "type": "feat",
+      "description": "Extend FeedbackEntry type to include structured decision metadata: decision type, verification gate name if applicable, and structured refinement categories",
+      "instructions": "Edit src/agents/types/common.types.ts to add new fields to the FeedbackEntry interface:\n- Add an optional 'metadata' field that captures structured decision data.\n- For APPROVED decisions, include: verificationsPassed (string array of gate names like 'typecheck'), filesChanged (number), linesAdded (number).\n- For DISCARDED decisions, include: verificationsFailed (string array of failed gates, or empty if discarded for logic/design reasons), reason ('verification' | 'logic' | 'design').\n- For REFINED decisions, include: refinementCategories (string array: 'clarity', 'efficiency', 'pattern', 'feature').\nKeep the rest of the interface unchanged. Ensure this is backward-compatible — metadata should be optional.",
+      "targetFiles": ["/Users/leonardo/Documents/code/projects/magent-target/src/agents/types/common.types.ts"],
+      "contextFiles": [],
+      "status": "pending"
+    },
+    {
+      "id": 2,
+      "slug": "update-feedback-save-load",
+      "type": "feat",
+      "description": "Update feedback save and load logic to handle the new metadata field and preserve it when reading/writing JSONL",
+      "instructions": "Edit src/project/feedback.ts:\n1. Update the loadFeedback function to parse the metadata field from JSONL entries and include it in the text formatting (optional — only if metadata exists, format it as a summary line).\n2. No changes needed to saveFeedback — it already JSON.stringify the entire FeedbackEntry, so metadata will be saved automatically.\n3. Keep the display format human-readable: if metadata exists, append a one-line summary after the decision, e.g. \"(typechecked OK, 3 files)\". \n4. Ensure backward compatibility: entries without metadata parse and display fine.",
+      "targetFiles": ["/Users/leonardo/Documents/code/projects/magent-target/src/project/feedback.ts"],
+      "contextFiles": [],
+      "status": "pending"
+    },
+    {
+      "id": 3,
+      "slug": "capture-metadata-on-keep-discard",
+      "type": "feat",
+      "description": "Capture structured decision metadata when the human approves or discards an execution, and pass it to saveFeedback",
+      "instructions": "Edit src/services/keep-execution.service.ts and src/services/discard-execution.service.ts:\n1. In keep-execution.service.ts: Before saveFeedback is called, build a metadata object with verificationsPassed (extract from the verify step — what gates were run and passed), filesChanged and linesAdded (inspect the commits/diff). Set reason='logic' by default; only use 'verification' if the human explicitly says the verification matters.\n2. In discard-execution.service.ts: Before saveFeedback is called, build a metadata object. Set reason='verification' if a verification gate failed (check the execAttempts for typecheck errors), otherwise 'design'. Include verificationsFailed if applicable.\n3. Pass metadata in the FeedbackEntry object sent to saveFeedback in both cases.\n4. If precise metrics are hard to extract, use reasonable estimates (e.g., count git diff lines, count edited files).",
+      "targetFiles": [
+        "/Users/leonardo/Documents/code/projects/magent-target/src/services/keep-execution.service.ts",
+        "/Users/leonardo/Documents/code/projects/magent-target/src/services/discard-execution.service.ts"
+      ],
+      "contextFiles": [
+        "/Users/leonardo/Documents/code/projects/magent-target/src/services/run-verified-execution/index.ts"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": 4,
+      "slug": "capture-metadata-on-refine",
+      "type": "feat",
+      "description": "Capture refinement category metadata when the human refines an execution, so patterns in refinement requests are learnable",
+      "instructions": "Edit src/services/refine-execution.service.ts (or the appropriate refine service):\n1. When a refinement is recorded, the human provides refinement text. Parse or prompt for refinement category (or capture it from the UI if available).\n2. For now, use heuristic matching on refinement text to infer category: if the comment mentions 'clear', 'readable', 'format', 'style' → 'clarity'; if 'fast', 'optimize', 'redundant' → 'efficiency'; if 'like X', 'match', 'pattern', 'consistent' → 'pattern'; if 'add', 'missing', 'needs' → 'feature'.\n3. Store refinement categories in the FeedbackEntry.metadata.refinementCategories array.\n4. This makes it learnable: \"This builder asks for clarity refinements more than feature refinements.\"\nNote: This is best-effort heuristic matching, not perfect categorization.",
+      "targetFiles": ["/Users/leonardo/Documents/code/projects/magent-target/src/services/refine-execution.service.ts"],
+      "contextFiles": [],
+      "status": "pending"
+    },
+    {
+      "id": 5,
+      "slug": "surface-metadata-in-executor-prompt",
+      "type": "feat",
+      "description": "Update the Executor prompt to highlight the metadata patterns in past feedback, making lessons actionable",
+      "instructions": "Edit src/services/run-verified-execution/build-prompt.ts:\n1. After loading executor feedback (via loadFeedback), parse the metadata from recent JSONL entries (read the file directly if needed to access raw metadata).\n2. Add a new section to the executor prompt (in buildImplementPrompt and buildRefinePrompt) called '--- FEEDBACK PATTERNS ---' that summarizes:\n   - Most common verification gates that fail (if any)\n   - Typical file change counts in approved vs discarded work\n   - Refinement category trends (e.g. \"Recent refinements were 60% clarity, 30% efficiency\")\n   - Design rejection patterns (if feedback shows many 'design' rejections, highlight that)\n3. Keep it brief (5-10 lines) and actionable: \"Your recent discards were mostly verification failures in typecheck. Focus on type safety.\"\n4. Place this section before PAST FEEDBACK so it's prominent.",
+      "targetFiles": [
+        "/Users/leonardo/Documents/code/projects/magent-target/src/services/run-verified-execution/build-prompt.ts"
+      ],
+      "contextFiles": ["/Users/leonardo/Documents/code/projects/magent-target/src/project/feedback.ts"],
+      "status": "pending"
+    }
+  ]
+}
