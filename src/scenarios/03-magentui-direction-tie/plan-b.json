@@ -1,0 +1,39 @@
+{
+  "frontier": "Improve the direction review surface, the highest-stakes decision point in the loop",
+  "goal": "Make the direction review moment legible and deliberate by showing what documents will change and providing clear context before approval",
+  "type": "feat",
+  "slug": "enhance-direction-review",
+  "dependencies": [],
+  "tasks": [
+    {
+      "id": 1,
+      "slug": "add-direction-header-and-sections",
+      "type": "feat",
+      "description": "Add a header and sectioned layout to DirectionView orienting the user to what they are approving",
+      "instructions": "Rewrite src/modules/main-panel/direction.view.tsx to add a clear header and sectioned structure:\n\n1. Header section:\n   - 'Direction Proposal' title in --foreground\n   - Subtitle in --foreground-muted: 'This updates your project direction and conventions'\n\n2. Rationale section: keep the existing rationale content but give it a clear labeled container instead of a raw pre-block.\n\n3. Keep all existing logic (approveDirection, discardDirection, acting, error states) and the Approve/Discard buttons at the bottom, restyled for consistency.\n\nLeave document previews for a following task — this task only establishes the header and rationale structure.",
+      "targetFiles": ["/Users/leonardo/Documents/code/projects/magent-ui/src/modules/main-panel/direction.view.tsx"],
+      "contextFiles": [
+        "/Users/leonardo/Documents/code/projects/magent-ui/app/globals.css",
+        "/Users/leonardo/Documents/code/projects/magent-ui/src/model/direction.model.ts"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": 2,
+      "slug": "create-and-wire-document-preview",
+      "type": "feat",
+      "description": "Create a DocumentPreview component and wire the proposal's documents into DirectionView with view-full navigation",
+      "instructions": "Create src/components/document-preview.tsx and wire it into DirectionView in one coherent change:\n\n1. DocumentPreview component, props: name (string), preview (string), onViewFull (callback). Render a labeled header (name in --foreground), a --code-bg preview area in monospace, and a 'view full document' affordance.\n\n2. In direction.view.tsx, for each doc in direction.docs, derive a 5-7 line preview, render a DocumentPreview, and wire onViewFull to selectView({ kind: 'doc', name: doc.name }) via useMagent(). Always show direction.md and conventions.md; list additional docs below.\n\nThe component and its single consumer are built together since the component shape is driven by this exact use.",
+      "targetFiles": [
+        "/Users/leonardo/Documents/code/projects/magent-ui/src/components/document-preview.tsx",
+        "/Users/leonardo/Documents/code/projects/magent-ui/src/modules/main-panel/direction.view.tsx"
+      ],
+      "contextFiles": [
+        "/Users/leonardo/Documents/code/projects/magent-ui/app/globals.css",
+        "/Users/leonardo/Documents/code/projects/magent-ui/src/providers/magent.provider.tsx",
+        "/Users/leonardo/Documents/code/projects/magent-ui/src/model/direction.model.ts"
+      ],
+      "status": "pending"
+    }
+  ]
+}

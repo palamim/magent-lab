@@ -1,0 +1,39 @@
+{
+  "frontier": "Improve the direction review surface, the highest-stakes decision point in the loop",
+  "goal": "Make the direction review moment legible and deliberate by showing what documents will change and providing clear context before approval",
+  "type": "feat",
+  "slug": "enhance-direction-review",
+  "dependencies": [],
+  "tasks": [
+    {
+      "id": 1,
+      "slug": "restructure-direction-view",
+      "type": "feat",
+      "description": "Restructure DirectionView with clear document preview headers and rationale organization",
+      "instructions": "Rewrite src/modules/main-panel/direction.view.tsx to:\n\n1. Create a header section showing 'Direction Proposal' title, a brief description of what the user is approving, and a visual indicator of included documents.\n2. Reorganize content into a labeled rationale section and a document previews section (each doc name with a badge, a 5-7 line read-only preview, and a 'view full document' link).\n3. Use semantic colors (--foreground, --foreground-muted, --surface-raised, --border, --code-bg).\n4. Keep all existing logic (approveDirection, discardDirection, acting, error states) and the Approve/Discard buttons.",
+      "targetFiles": ["/Users/leonardo/Documents/code/projects/magent-ui/src/modules/main-panel/direction.view.tsx"],
+      "contextFiles": [],
+      "status": "pending"
+    },
+    {
+      "id": 2,
+      "slug": "create-document-preview-component",
+      "type": "feat",
+      "description": "Extract a reusable DocumentPreview component for displaying document snippets with view-full links",
+      "instructions": "Create src/components/document-preview.tsx accepting name (string), preview (string), and optional fullContent. Render a labeled header (name in --foreground, 'Preview' in --foreground-faint), a --code-bg monospace preview area with --code-border, and a truncation indicator. Display-only; interactivity wired by the parent.",
+      "targetFiles": ["/Users/leonardo/Documents/code/projects/magent-ui/src/components/document-preview.tsx"],
+      "contextFiles": [],
+      "status": "pending"
+    },
+    {
+      "id": 3,
+      "slug": "wire-doc-preview-into-direction-view",
+      "type": "feat",
+      "description": "Integrate DocumentPreview component into DirectionView and wire document sidebar navigation",
+      "instructions": "Update src/modules/main-panel/direction.view.tsx to import DocumentPreview, extract 5-7 line preview snippets from direction.docs, render a DocumentPreview per doc, and wire 'view full document' to call selectView({ kind: 'doc', name: doc.name }) via useMagent(). Always show direction.md and conventions.md; list additional docs below. Keep error handling and action states as-is.",
+      "targetFiles": ["/Users/leonardo/Documents/code/projects/magent-ui/src/modules/main-panel/direction.view.tsx"],
+      "contextFiles": [],
+      "status": "pending"
+    }
+  ]
+}

@@ -8,11 +8,12 @@ const here = dirname(fileURLToPath(import.meta.url));
 const read = (file: string) => readFileSync(join(here, file), 'utf8');
 
 export const feedbackLoopScenario: Scenario = {
-  name: 'feedback-loop-v1-vs-v2',
+  name: '01-magent-feedback-loop',
   description:
     'Real Magent output: two plans for the "deepen the feedback loop" frontier. ' +
-    'Plan A over-engineered (keyword categorizer + second JSONL the direction did not ask for). ' +
-    'Plan B captures structured metadata at the source — better, simpler. Ground truth: B wins.',
+    'Plan A is over-engineered (keyword categorizer + a second derived JSONL the direction never asked for); ' +
+    'Plan B captures structured metadata at the source — simpler, denser signal. ' +
+    'A clear, objective difference (over-engineering vs. clean capture). Ground truth: B.',
   direction: read('direction.md'),
   conventions: read('conventions.md'),
   planA: read('plan-a.json'),

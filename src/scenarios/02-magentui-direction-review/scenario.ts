@@ -7,18 +7,18 @@ import type { Scenario } from '@/scenarios/scenario.types';
 const here = dirname(fileURLToPath(import.meta.url));
 const read = (file: string) => readFileSync(join(here, file), 'utf8');
 
-export const magentUiDirectionReviewScenario: Scenario = {
-  name: 'feedback-loop-v1-vs-v2',
+export const directionReviewScenario: Scenario = {
+  name: '02-magentui-direction-review',
   description:
     'Two real Planner re-runs on the DirectionView legibility/trust direction. ' +
-    'Both share flaws (abstract HOW, hallucinated goal/frontier fields) ' +
-    'Plan A splits into redesign + a premature component-extraction task (over-engineering, first-use abstraction); ' +
-    'Plan B is one focused redesign. Ground truth: B ' +
-    `A's unrequested second task outweighs B's density` +
-    `(Originally mis-judged as A; the judge caught the over-engineering in A's task 2.)`,
+    'Both share flaws (abstract HOW, hallucinated goal/frontier fields). Plan A splits into a redesign ' +
+    'plus a premature component-extraction task; Plan B is one denser redesign. Each has a roughly ' +
+    'equal-and-opposite weakness (A over-engineers, B overloads), so the plans are genuinely close. ' +
+    'Ground truth: tie. (Hand-judged A, then B across two passes before settling on tie — the back-and-forth ' +
+    'is itself the evidence these are near-equal.) The judge flagging this BIASED/tie is correct behavior on a close pair.',
   direction: read('direction.md'),
   conventions: read('conventions.md'),
   planA: read('plan-a.json'),
   planB: read('plan-b.json'),
-  expectedWinner: 'B', //
+  expectedWinner: 'tie',
 };
