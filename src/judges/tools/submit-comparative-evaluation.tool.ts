@@ -1,6 +1,6 @@
 import type Anthropic from '@anthropic-ai/sdk';
 
-import type { ComparativeEvaluation, Verdict } from '@/judges/types/common.types';
+import type { ComparativeEvaluation, CriterionJudgment, Verdict } from '@/judges/types/common.types';
 
 const VERDICTS: Verdict[] = ['A', 'B', 'tie'];
 const isVerdict = (v: unknown): v is Verdict => VERDICTS.includes(v as Verdict);
@@ -54,18 +54,14 @@ export const submitComparativeEvaluationTool: Anthropic.Tool = {
 
 // ── execution (faces the machine) — fail loud, never fabricate ──
 export const executeSubmitComparativeEvaluation = (raw: unknown): ComparativeEvaluation => {
-  const input = raw as Partial<{
-    criteria: unknown;
-    holisticWinner: unknown;
-    summary: unknown;
-  }>;
+  const input = raw as Partial<ComparativeEvaluation>;
 
   if (!Array.isArray(input.criteria) || input.criteria.length === 0) {
     throw new Error('Judge returned no per-criterion judgments.');
   }
 
   const criteria = input.criteria.map((c, i) => {
-    const entry = c as Partial<{ criterion: string; reasoning: string; favors: unknown }>;
+    const entry = c as Partial<CriterionJudgment>;
     if (!entry.criterion || !entry.reasoning) {
       throw new Error(`Criterion judgment ${i} is missing criterion or reasoning.`);
     }

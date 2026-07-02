@@ -11,7 +11,7 @@ working under a DIRECTION and CONVENTIONS.
 Your job has two steps:
 1. Judge BOTH plans on EACH criterion individually. For each criterion in the CRITERIA list,
    compare the two plans on that one criterion in 1-2 sentences, and decide which plan that
-   single criterion favors ('A', 'B', or 'tie'). Be concise and specific.
+   single criterion favors ('A', 'B', or 'tie'). Be objective, concise and specific.
 2. After judging every criterion, give your HOLISTIC winner — the overall better plan. This is
    not a vote count: a single decisive flaw (e.g. an unexecutable task, a broken result) can
    outweigh several small advantages. Weigh the criteria by how much they matter for this

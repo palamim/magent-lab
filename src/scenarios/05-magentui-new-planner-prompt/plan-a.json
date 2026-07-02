@@ -1,0 +1,41 @@
+{
+  "frontier": "Make the direction review decision point feel deliberate, informative, and trustworthy.",
+  "goal": "Redesign the direction review view to orient users and make the approval decision feel high-stakes and deliberate.",
+  "type": "feat",
+  "slug": "enrich-direction-review",
+  "dependencies": [],
+  "tasks": [
+    {
+      "id": 1,
+      "slug": "redesign-direction-view-layout",
+      "type": "feat",
+      "description": "Redesign DirectionView with rich layout, document preview, and proper information hierarchy",
+      "instructions": "Replace the current DirectionView with a redesigned layout that includes:\n\n1. A clear header explaining the stakes: 'Direction Proposal — Decide what to build'\n2. Display the direction metadata in a structured way:\n   - Goal: one-line statement of what this direction proposes\n   - Frontier: the slice of the strategy this serves\n3. Add a 'Documents to change' section that shows previews or summaries of:\n   - The direction.md file preview\n   - The conventions.md file preview\n   - A brief note explaining what these files do\n4. Keep the rationale prominently displayed as the core proposal\n5. Action buttons at the bottom (Approve / Discard) with clear labeling\n6. Use the design tokens and patterns already established in the codebase:\n   - Surface layering for depth\n   - State colors for semantic meaning\n   - Consistent spacing and typography\n\nThe goal is to make the user understand: \"I'm approving this entire direction, which includes these changes to our strategy and conventions.\"\n\nReference the existing plan.view.tsx for layout patterns and task.view.tsx for button styling.",
+      "targetFiles": [
+        "/Users/leonardo/Documents/code/projects/magent-ui/src/modules/main-panel/direction.view.tsx"
+      ],
+      "contextFiles": [
+        "/Users/leonardo/Documents/code/projects/magent-ui/src/model/direction.model.ts",
+        "/Users/leonardo/Documents/code/projects/magent-ui/src/modules/main-panel/plan.view.tsx",
+        "/Users/leonardo/Documents/code/projects/magent-ui/src/modules/main-panel/task.view.tsx",
+        "/Users/leonardo/Documents/code/projects/magent-ui/app/globals.css"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": 2,
+      "slug": "extract-direction-section-components",
+      "type": "refactor",
+      "description": "Extract reusable sub-components within DirectionView for clarity",
+      "instructions": "Within the DirectionView file, extract the following as inline sub-components (not promoted to src/components/ yet, as they're only used in this view):\n\n1. DirectionHeader - displays the goal and frontier with proper typography and spacing\n2. DocumentsPreview - displays a grid or stack of the direction and conventions documents with a brief preview of each\n3. RationaleSection - displays the full rationale in a formatted container\n4. ActionButtons - the Approve/Discard buttons with loading states\n\nEach sub-component should accept only the props it needs from the parent DirectionView. This improves readability and makes each section's responsibility clear.\n\nKeep all components in the same file (src/modules/main-panel/direction.view.tsx) — do not promote them to src/components/.",
+      "targetFiles": [
+        "/Users/leonardo/Documents/code/projects/magent-ui/src/modules/main-panel/direction.view.tsx"
+      ],
+      "contextFiles": [
+        "/Users/leonardo/Documents/code/projects/magent-ui/src/model/direction.model.ts",
+        "/Users/leonardo/Documents/code/projects/magent-ui/src/modules/main-panel/direction.view.tsx"
+      ],
+      "status": "pending"
+    }
+  ]
+}

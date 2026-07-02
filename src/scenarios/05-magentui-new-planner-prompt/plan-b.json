@@ -1,0 +1,53 @@
+{
+  "frontier": "Improve the direction review surface, the highest-stakes decision point in the loop",
+  "goal": "Make the direction review moment legible and deliberate by showing what documents will change and providing clear context before approval",
+  "type": "feat",
+  "slug": "enhance-direction-review",
+  "dependencies": [],
+  "tasks": [
+    {
+      "id": 1,
+      "slug": "restructure-direction-view",
+      "type": "feat",
+      "description": "Restructure DirectionView with clear document preview headers and rationale organization",
+      "instructions": "Rewrite src/modules/main-panel/direction.view.tsx to:\n\n1. Create a header section showing:\n   - 'Direction Proposal' title\n   - Brief description of what the user is approving (\"This updates your project direction and conventions\")\n   - Visual indicator of included documents (direction.md, conventions.md, and any other docs in the proposal)\n\n2. Reorganize the content into sections:\n   - Rationale section (the current pre-block, but with a clear label)\n   - Document previews section showing:\n     * Each document name with a small badge/label\n     * A read-only preview of the first 5-7 lines of each document\n     * A subtle button or link to \"view full document\"\n\n3. Style guidelines:\n   - Use semantic color for the header: 'Direction Proposal' in --foreground, subtitle in --foreground-muted\n   - Document badges should use --surface-raised background with --border\n   - Previews should use --code-bg for the code areas (matching the diff viewer theme)\n   - Keep the existing button layout at the bottom (Approve/Discard) but style them consistently\n\n4. Keep all existing logic (approveDirection, discardDirection, acting, error states) unchanged\n\nContext: The goal is to make the user understand at a glance what documents they're approving and what will change, turning a raw dump into an oriented, deliberate decision.",
+      "targetFiles": [
+        "/Users/leonardo/Documents/code/projects/magent-ui/src/modules/main-panel/direction.view.tsx"
+      ],
+      "contextFiles": [
+        "/Users/leonardo/Documents/code/projects/magent-ui/app/globals.css",
+        "/Users/leonardo/Documents/code/projects/magent-ui/src/model/direction.model.ts"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": 2,
+      "slug": "create-document-preview-component",
+      "type": "feat",
+      "description": "Extract a reusable DocumentPreview component for displaying document snippets with view-full links",
+      "instructions": "Create src/components/document-preview.tsx to:\n\n1. Accept props:\n   - name: string (e.g., 'direction.md')\n   - preview: string (first 5-7 lines of the document)\n   - fullContent?: string (full content for the modal, optional)\n\n2. Render:\n   - A labeled header: name in --foreground, 'Preview' in --foreground-faint\n   - A code-style preview area using --code-bg background\n   - Truncation indicator if content is truncated (\"... (view full document)\")\n   - On click, optionally open a modal or navigate to view full (handle in direction.view for now)\n\n3. Style:\n   - Use --code-bg for preview area background\n   - Use --code-border for subtle border\n   - Monospace font for the preview\n   - Padding/spacing consistent with globals.css theme\n\n4. Keep it simple — the component is primarily display, not interactive beyond preview text. Interactivity (view full) will be wired by the parent.",
+      "targetFiles": [
+        "/Users/leonardo/Documents/code/projects/magent-ui/src/components/document-preview.tsx"
+      ],
+      "contextFiles": [
+        "/Users/leonardo/Documents/code/projects/magent-ui/app/globals.css"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": 3,
+      "slug": "wire-doc-preview-into-direction-view",
+      "type": "feat",
+      "description": "Integrate DocumentPreview component into DirectionView and wire document sidebar navigation",
+      "instructions": "Update src/modules/main-panel/direction.view.tsx to:\n\n1. Import the DocumentPreview component\n\n2. Extract preview snippets from direction.docs:\n   - For each doc in direction.docs, take the first ~150 characters or first 5-7 lines (whichever is cleaner)\n   - Pass name and preview to DocumentPreview\n\n3. Wire the 'view full document' interaction:\n   - When user clicks a document preview, call selectView({ kind: 'doc', name: doc.name })\n   - Use useMagent() to access selectView\n   - This navigates to the existing DocDiffView for full content\n\n4. Ensure:\n   - The direction.md (rationale) and conventions.md are always shown\n   - Additional docs from direction.docs are listed below\n   - All previews are read-only\n   - The layout is clean and the user understands at a glance what documents are included\n\n5. Keep error handling and action states as-is",
+      "targetFiles": [
+        "/Users/leonardo/Documents/code/projects/magent-ui/src/modules/main-panel/direction.view.tsx"
+      ],
+      "contextFiles": [
+        "/Users/leonardo/Documents/code/projects/magent-ui/src/model/direction.model.ts",
+        "/Users/leonardo/Documents/code/projects/magent-ui/src/providers/magent.provider.tsx"
+      ],
+      "status": "pending"
+    }
+  ]
+}
