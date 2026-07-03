@@ -1,55 +1,89 @@
 import 'dotenv/config';
 import { anthropic } from '@/lib/anthropic';
 import { runScenario } from '@/runner/run';
+import type { RunResult } from '@/runner/run';
 import { feedbackLoopScenario } from '@/scenarios/01-magent-feedback-loop/scenario';
 import { directionReviewScenario } from '@/scenarios/02-magentui-direction-review/scenario';
 import { directionTieScenario } from '@/scenarios/03-magentui-direction-tie/scenario';
 import { directionDegradedContextScenario } from '@/scenarios/04-magentui-direction-degraded-context/scenario';
-import type { CriterionJudgment } from '@/judges/types/common.types';
-import type { Scenario } from '@/scenarios/scenario.types';
-import { newPlannerPromptCvA } from './scenarios/05-magentui-new-planner-prompt/scenario';
+import { newPlannerPromptScenario } from '@/scenarios/05-magentui-new-planner-prompt/scenario';
+import type { CriterionJudgment, GateJudgment } from '@/judges/types/common.types';
+import type { FetchedFile } from './lib/fetch-plan-context';
 
 const scenarios = [
   feedbackLoopScenario,
   directionReviewScenario,
   directionTieScenario,
   directionDegradedContextScenario,
-  newPlannerPromptCvA,
+  newPlannerPromptScenario,
 ];
 
-const formatCriteria = (criteria: CriterionJudgment[]): string =>
-  criteria.map((c) => `   [${c.favors}] ${c.criterion}`).join('\n');
+const formatGates = (criteria: GateJudgment[]): string =>
+  criteria.map((c) => `      [${c.answer === 'yes' ? '✓' : '✗'}] ${c.criterion} — ${c.reasoning}`).join('\n');
 
-const main = async () => {
-  const scenario = scenarios[4] as Scenario;
-  console.log(`\n🧪 Running scenario: ${scenario.name}\n`);
-  console.log(scenario.description, '\n');
+const formatComparative = (criteria: CriterionJudgment[]): string =>
+  criteria.map((c) => `      [${c.favors}] ${c.criterion} — ${c.reasoning}`).join('\n');
 
-  const result = await runScenario(anthropic, scenario);
+const VERBOSE = true; // flip to false for quick scoreboard-only runs
 
+const printResult = (r: RunResult): void => {
+  console.log(`\n🧪 ${r.scenario}`);
   console.log('─'.repeat(64));
-  console.log(`Forward  (A=planA, B=planB):  holistic=${result.forwardWinner}  tally=${result.forwardTally}`);
-  console.log(
-    `Swapped  (A=planB, B=planA):  holistic=${result.swappedWinner}  tally=${result.swappedTally}  (translated back)`,
-  );
-  console.log(`Position biased? ${result.positionBiased ? 'YES — holistic flipped on swap' : 'no — consistent'}`);
-  console.log(
-    `Contested? ${result.contested ? 'YES — holistic disagreed with its own tally' : 'no — holistic and tally agree'}`,
-  );
-  console.log('─'.repeat(64));
+  const fmtFiles = (files: FetchedFile[]): string =>
+    files.map((f) => `      ${f.found ? '✓' : '✗'} ${f.path}${f.found ? '' : '  → NOT FOUND'}`).join('\n');
 
-  console.log(`\n⚖️  Consistent verdict: ${result.consistentWinner}`);
-  if (result.expectedWinner) {
-    console.log(`📌 Ground truth: ${result.expectedWinner}`);
-    console.log(
-      result.agreedWithExpected ? '✅ Judge AGREED with ground truth' : '❌ Judge DISAGREED with ground truth',
-    );
+  console.log(
+    `   Plan A context (${r.planAGate.files.filter((f) => f.found).length}/${r.planAGate.files.length} found):`,
+  );
+  console.log(fmtFiles(r.planAGate.files));
+
+  console.log(
+    `   Plan B context (${r.planBGate.files.filter((f) => f.found).length}/${r.planBGate.files.length} found):`,
+  );
+  console.log(fmtFiles(r.planBGate.files));
+  console.log('─'.repeat(64));
+  console.log(`   Plan A gates: ${r.planAGate.passed ? 'PASSED' : `FAILED (${r.planAGate.failedGates.join(', ')})`}`);
+  console.log(`   Plan B gates: ${r.planBGate.passed ? 'PASSED' : `FAILED (${r.planBGate.failedGates.join(', ')})`}`);
+
+  if (VERBOSE) {
+    console.log(`\n   Plan A gate reasoning:\n${formatGates(r.planAGate.gate.criteria)}`);
+    console.log(`\n   Plan B gate reasoning:\n${formatGates(r.planBGate.gate.criteria)}`);
   }
 
-  console.log(`\n── Forward per-criterion ──\n${formatCriteria(result.forward.evaluation.criteria)}`);
-  console.log(`\n   Summary: ${result.forward.evaluation.summary}`);
-  console.log(`\n── Swapped per-criterion ──\n${formatCriteria(result.swapped.evaluation.criteria)}`);
-  console.log(`\n   Summary: ${result.swapped.evaluation.summary}\n`);
+  if (r.decidedBy === 'gate') {
+    console.log(`   → decided by GATE`);
+  } else {
+    console.log(`   → both passed gates, decided by COMPARISON`);
+    console.log(
+      `     forward=${r.forwardWinner}  swapped=${r.swappedWinner}  ${r.positionBiased ? '(BIASED → tie)' : '(consistent)'}`,
+    );
+    if (VERBOSE && r.forwardComparison && r.swappedComparison) {
+      console.log(`\n   Comparison (forward):\n${formatComparative(r.forwardComparison.criteria)}`);
+      console.log(`\n   Comparison (swapped):\n${formatComparative(r.swappedComparison.criteria)}`);
+    }
+  }
+
+  console.log(`\n   ⚖️  Verdict: ${r.winner}`);
+  if (r.expectedWinner) {
+    console.log(`   📌 Expected: ${r.expectedWinner}  ${r.agreedWithExpected ? '✅' : '❌'}`);
+  }
+};
+
+const main = async () => {
+  const results: RunResult[] = [];
+  for (const scenario of scenarios) {
+    const r = await runScenario(anthropic, scenario);
+    results.push(r);
+    printResult(r);
+  }
+
+  // scoreboard
+  console.log(`\n${'═'.repeat(64)}\n SCOREBOARD`);
+  for (const r of results) {
+    const mark = r.agreedWithExpected === undefined ? '—' : r.agreedWithExpected ? '✅' : '❌';
+    console.log(`   ${mark}  ${r.scenario}: ${r.winner} (expected ${r.expectedWinner ?? '—'}, by ${r.decidedBy})`);
+  }
+  console.log('');
 };
 
 main().catch((err) => {

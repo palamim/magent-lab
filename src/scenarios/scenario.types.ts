@@ -1,3 +1,5 @@
+import type { Verdict } from '@/judges/types/common.types';
+
 export interface Scenario {
   name: string;
   description: string;
@@ -5,5 +7,6 @@ export interface Scenario {
   conventions: string;
   planA: string;
   planB: string;
-  expectedWinner?: 'A' | 'B' | 'tie';
+  projectRoot: string;
+  expectedWinner?: Verdict;
 }
