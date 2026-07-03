@@ -19,7 +19,7 @@ const main = async () => {
       buildPrompt: (d, f, c) => freshPlanPromptCurrent(d, f, c),
     },
     [liveMagentFixture()],
-    1, // N per fixture
+    20, // N per fixture
   );
   console.log('\n✅ Experiment complete. Query the DB for results.');
 };

@@ -23,6 +23,13 @@ interface PlannerRunResult {
   outputTokens: number;
 }
 
+interface GenOutcome {
+  planRunId: string | null;
+  planJson: string | null;
+  gatePassed: boolean;
+  failed: boolean;
+}
+
 const callGeneratePlan = async (dir: string, prompt: string, model: string): Promise<PlannerRunResult> => {
   const res = await fetch(`${BRAIN_URL}/generate-plan`, {
     method: 'POST',
@@ -38,19 +45,24 @@ const generateAndRecord = async (
   fixture: FixtureInput,
   fixtureId: string,
   criterionIds: Record<string, string>, // ← passed in, fetched once
-): Promise<{ planRunId: string; planJson: string; gatePassed: boolean }> => {
+): Promise<GenOutcome> => {
   const t0 = Date.now();
   const prompt = config.buildPrompt(fixture.direction, fixture.fileList.join('\n'), fixture.conventions);
-  const result = await callGeneratePlan(fixture.projectRoot, prompt, config.model);
-  const latencyMs = Date.now() - t0;
 
+  let result: PlannerRunResult;
+  try {
+    result = await callGeneratePlan(fixture.projectRoot, prompt, config.model);
+  } catch (err) {
+    console.log(`  ⚠️  ${config.name} failed to generate: ${err instanceof Error ? err.message : err}`);
+    return { planRunId: null, planJson: null, gatePassed: false, failed: true };
+  }
+
+  const latencyMs = Date.now() - t0;
   const planJson = JSON.stringify(result.plan);
 
-  // gate the plan (single-plan gate phase) — real signature
   const gateOutcome = await gate(anthropic, fixture.direction, fixture.conventions, planJson, fixture.projectRoot);
   const allGatesPassed = gateOutcome.passed;
 
-  // map each gate criterion to its DB id; fail loud if a name doesn't match a seeded criterion
   const gateResults = gateOutcome.criteria.map((g) => {
     const criterionId = criterionIds[g.criterion];
     if (!criterionId) {
@@ -79,7 +91,7 @@ const generateAndRecord = async (
     gateResults,
   });
 
-  return { planRunId, planJson, gatePassed: allGatesPassed };
+  return { planRunId, planJson, gatePassed: allGatesPassed, failed: false };
 };
 
 export const runExperiment = async (
@@ -88,7 +100,7 @@ export const runExperiment = async (
   fixtures: FixtureInput[],
   nPerFixture: number,
 ): Promise<void> => {
-  const criterionIds = await getGateCriterionIds(); // ← fetched ONCE, reused
+  const criterionIds = await getGateCriterionIds();
 
   for (const fixture of fixtures) {
     const fixtureId = await getOrCreateFixture({
@@ -104,12 +116,31 @@ export const runExperiment = async (
       const a = await generateAndRecord(configA, fixture, fixtureId, criterionIds);
       const b = await generateAndRecord(configB, fixture, fixtureId, criterionIds);
 
+      // if either config failed to generate a plan, record that outcome and move on.
+      if (a.failed || b.failed) {
+        const winner = a.failed && b.failed ? 'tie' : a.failed ? 'B' : 'A';
+        console.log(`  ⚠️  generation failure — A failed:${a.failed} B failed:${b.failed} → ${winner}`);
+        // only record a comparison if at least one plan exists to reference
+        if (a.planRunId && b.planRunId) {
+          await recordComparison({
+            fixtureName: fixture.name,
+            planAId: a.planRunId,
+            planBId: b.planRunId,
+            winner,
+            decidedBy: 'gate',
+            positionBiased: false,
+            reasoningJson: { note: 'generation failure', aFailed: a.failed, bFailed: b.failed },
+          });
+        }
+        continue;
+      }
+
       if (a.gatePassed && b.gatePassed) {
-        const cmp = await compare(anthropic, fixture.direction, fixture.conventions, a.planJson, b.planJson);
+        const cmp = await compare(anthropic, fixture.direction, fixture.conventions, a.planJson!, b.planJson!);
         await recordComparison({
           fixtureName: fixture.name,
-          planAId: a.planRunId,
-          planBId: b.planRunId,
+          planAId: a.planRunId!,
+          planBId: b.planRunId!,
           winner: cmp.winner,
           decidedBy: 'comparison',
           positionBiased: cmp.positionBiased,
@@ -120,16 +151,12 @@ export const runExperiment = async (
         const winner = a.gatePassed ? 'A' : b.gatePassed ? 'B' : 'tie';
         await recordComparison({
           fixtureName: fixture.name,
-          planAId: a.planRunId,
-          planBId: b.planRunId,
+          planAId: a.planRunId!,
+          planBId: b.planRunId!,
           winner,
           decidedBy: 'gate',
           positionBiased: false,
-          reasoningJson: {
-            note: 'decided by gate failure',
-            aFailed: a.gatePassed ? [] : 'gates',
-            bFailed: b.gatePassed ? [] : 'gates',
-          },
+          reasoningJson: { note: 'decided by gate failure' },
         });
         console.log(`  A gates:${a.gatePassed} B gates:${b.gatePassed} → winner ${winner} (by gate)`);
       }
