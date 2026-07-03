@@ -7,6 +7,6 @@ if (!PROJECTS_ROOT) throw new Error('PROJECTS_ROOT not set in .env');
 export const projectRoot = (repo: string): string => join(PROJECTS_ROOT, repo);
 
 export const ROOTS = {
-  magentBrain: projectRoot('magent-target'),
+  magentBrain: projectRoot('magent'),
   magentUi: projectRoot('magent-ui'),
 } as const;

@@ -97,3 +97,59 @@ export const runScenario = async (client: Anthropic, scenario: Scenario): Promis
     agreedWithExpected: scenario.expectedWinner ? winner === scenario.expectedWinner : undefined,
   };
 };
+
+// runner/run.ts — add these two exported functions (keep runScenario as-is for regression)
+
+export interface GateOutcome {
+  passed: boolean;
+  criteria: { criterion: string; passed: boolean; reasoning: string }[];
+  files: FetchedFile[];
+}
+
+// Gate a SINGLE plan. Returns per-criterion pass/fail + reasoning (for recording).
+export const gate = async (
+  client: Anthropic,
+  direction: string,
+  conventions: string,
+  plan: string,
+  projectRoot: string | undefined,
+): Promise<GateOutcome> => {
+  const { block, files } = fetchPlanContext(plan, projectRoot);
+  const gateEval = await judgePlan(client, direction, conventions, plan, block);
+  const criteria = gateEval.criteria.map((c) => ({
+    criterion: c.criterion,
+    passed: c.answer === 'yes',
+    reasoning: c.reasoning,
+  }));
+  return { passed: criteria.every((c) => c.passed), criteria, files };
+};
+
+export interface CompareOutcome {
+  winner: Verdict;
+  positionBiased: boolean;
+  forward: ComparativeEvaluation;
+  swapped: ComparativeEvaluation;
+}
+
+// Compare TWO plans (assumes both already passed gates). Position-swap corrected.
+export const compare = async (
+  client: Anthropic,
+  direction: string,
+  conventions: string,
+  planA: string,
+  planB: string,
+): Promise<CompareOutcome> => {
+  const [forward, swapped] = await Promise.all([
+    comparePlans(client, direction, conventions, planA, planB),
+    comparePlans(client, direction, conventions, planB, planA),
+  ]);
+  const forwardWinner = forward.holisticWinner;
+  const swappedWinner = unswap(swapped.holisticWinner);
+  const positionBiased = forwardWinner !== swappedWinner;
+  return {
+    winner: positionBiased ? 'tie' : forwardWinner,
+    positionBiased,
+    forward,
+    swapped,
+  };
+};
