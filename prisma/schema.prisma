@@ -1,0 +1,139 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// A versioned experiment input: a direction + conventions + the fixed file context.
+/// Versioned so edits don't retroactively change what old runs were tested against.
+model Fixture {
+  id          String   @id @default(uuid())
+  name        String
+  version     Int
+  direction   String // direction.md content
+  conventions String // conventions.md content
+  fileList    Json // the directory listing (paths)
+  createdAt   DateTime @default(now())
+
+  planRuns PlanRun[]
+
+  @@unique([name, version])
+  @@index([name])
+}
+
+/// A versioned criterion definition. Rewording a criterion = a new version,
+/// so you can measure whether a wording change altered its pass/fail behavior.
+model Criterion {
+  id          String        @id @default(uuid())
+  name        String // 'Grounded', 'Executable', ...
+  description String // the exact wording used
+  kind        CriterionKind // gate | comparative
+  version     Int
+  createdAt   DateTime      @default(now())
+
+  gateResults GateResult[]
+
+  @@unique([name, version])
+  @@index([name])
+}
+
+enum CriterionKind {
+  gate
+  comparative
+}
+
+/// One plan the Planner generated under a specific config, on a specific fixture.
+/// Captures the plan, the cost, and the AGENT BEHAVIOR (tool calls, files read, steps).
+model PlanRun {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  // subject (the variable under test)
+  configName    String // 'baseline', 'distinct-deliverables', ...
+  promptVersion String // label/hash of the exact prompt used
+  model         String // 'claude-haiku-4-5', ...
+
+  // input
+  fixture   Fixture @relation(fields: [fixtureId], references: [id])
+  fixtureId String
+
+  // output
+  planJson       Json // the full generated plan — never lose it
+  allGatesPassed Boolean // denormalized for fast filtering
+
+  // cost
+  latencyMs    Int
+  inputTokens  Int
+  outputTokens Int
+  costUsd      Decimal @db.Decimal(10, 6)
+
+  // agent behavior
+  steps         Int // agent loop iterations
+  toolCalls     Int // total tool calls
+  readFileCalls Int // how many read_file calls
+  filesRead     Json // which files it chose to read
+
+  gateResults    GateResult[]
+  comparisonsAsA Comparison[] @relation("PlanA")
+  comparisonsAsB Comparison[] @relation("PlanB")
+
+  @@index([configName])
+  @@index([fixtureId])
+}
+
+/// The result of judging ONE plan on ONE criterion (the gate phase).
+/// References the versioned criterion so failure rates track across rewordings.
+model GateResult {
+  id          String    @id @default(uuid())
+  planRun     PlanRun   @relation(fields: [planRunId], references: [id], onDelete: Cascade)
+  planRunId   String
+  criterion   Criterion @relation(fields: [criterionId], references: [id])
+  criterionId String
+  passed      Boolean
+  reasoning   String
+
+  @@index([planRunId])
+  @@index([criterionId])
+  @@index([passed])
+}
+
+/// A head-to-head comparison of two plans (the comparison phase).
+/// decided_by tells you whether a gate failure or the Intent comparison resolved it.
+model Comparison {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  fixtureName String // denormalized for convenience
+
+  planA   PlanRun @relation("PlanA", fields: [planAId], references: [id])
+  planAId String
+  planB   PlanRun @relation("PlanB", fields: [planBId], references: [id])
+  planBId String
+
+  winner         Verdict
+  decidedBy      DecidedBy
+  positionBiased Boolean
+  reasoningJson  Json // full forward + swapped judge output
+
+  @@index([planAId])
+  @@index([planBId])
+}
+
+enum Verdict {
+  A
+  B
+  tie
+}
+
+enum DecidedBy {
+  gate
+  comparison
+}

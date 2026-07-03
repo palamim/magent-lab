@@ -1,3 +1,5 @@
 node_modules
 .env
 .magent/
+
+/src/generated/prisma
