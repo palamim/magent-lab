@@ -1,55 +1,68 @@
 # magent-lab
 
-A research lab for evaluating Magent's agents. The first instrument is a
-comparative judge for the Planner: given a direction, conventions, and two
-plans, it decides which plan is better — or whether they're a tie.
+A research lab for measuring the quality of Magent's agents (more in the end). Plan quality is
+open-ended — many valid plans exist — so the lab evaluates agents empirically:
+it runs controlled inputs through instrumented subjects, records every trial,
+and reports the numbers that answer _"is this configuration better?"_
 
-## Why
+## Foundational components
 
-The Planner is Magent's bottleneck: it drifts from the frontier, over-engineers,
-or produces tasks the Executor can't finish. To improve it without guessing, you
-need to _measure_ plan quality. Plan quality is open-ended (many valid plans), so
-the lab uses **comparative** evaluation (A vs. B) rather than absolute scoring.
+The lab is organized around the primitives of an experiment. Everything in
+`src/lab/` maps to one of them.
 
-## How it works
+| Component      | What it is                                                                                                    |
+| -------------- | ------------------------------------------------------------------------------------------------------------- |
+| **Fixture**    | Controlled, frozen input — independent variable held constant.                                                |
+| **Subject**    | The thing under test — an agent configuration (`agentType` × `model` × `prompt`).                             |
+| **Instrument** | The measuring apparatus — LLM `judges`, cost/latency `metrics`, model `clients`.                              |
+| **Criterion**  | The encoded definition of quality — versioned `gate` (pass/fail) or `comparative` (A-vs-B) standards.         |
+| **Experiment** | The protocol — which subjects run against which fixtures, and how many replicates.                            |
+| **Run**        | A single trial — one subject producing output over one fixture, with behavior, cost, and evaluation recorded. |
+| **Record**     | The lab notebook — Postgres-backed persistence (`db`), `seed`s, and `reports`.                                |
 
-A plan comparison runs through a Haiku **judge** that scores both plans on each
-of eight criteria (in `judges/plan/plan.criteria.ts` — the encoded definition of
-a good plan), emits a per-criterion winner plus a holistic winner, and a summary.
+## Method
 
-The **runner** wraps the judge in two rigor checks:
+Each replicate of an experiment moves a subject through three phases:
 
-- **Position swap** — judges forward (A,B) and swapped (B,A). If the holistic
-  winner flips, the result is `BIASED` and resolves to `tie` (the judge can't
-  hold a stable opinion → the plans are too close to separate).
-- **Tally cross-check** — computes a winner from the per-criterion favors and
-  flags `contested` if it disagrees with the holistic call (catches the judge's
-  verdict desyncing from its own reasoning).
+1. **Generate** — the subject agent runs against a fixture and produces output (a
+   plan, for example). The run captures behavior (steps, tool calls, files read), cost,
+   latency, and tokens.
+2. **Gate** — a Judge agent scores the output against each **gate criterion**
+   (grounded, executable, on-altitude, …). A run passes only if it clears every
+   gate. Gates catch objective flaws.
+3. **Compare** — two passing runs go head-to-head on the **comparative
+   criteria**. To control for position bias the judge evaluates both orderings
+   (A,B) and (B,A); if the winner flips, the comparison is `positionBiased` and
+   resolves to `tie`. If either run failed its gates, the comparison is decided
+   by gate instead of by judge.
 
-A result is **clean** when it's neither biased nor contested. Trust clean
-verdicts; read `BIASED` as "too close to call."
-
-## Scenarios
-
-Test cases live in `scenarios/NN-name/` as real files (`direction.md`,
-`conventions.md`, `plan-a.json`, `plan-b.json`, `scenario.ts`) with a known
-`expectedWinner`. The suite spans the difficulty range — clear winners (objective
-flaws like over-engineering or missing context) and genuine ties (close,
-equally-good plans) — so the judge is validated both on picking real differences
-and refraining on close calls.
-
-## Run
+## Setup
 
 ```bash
-npm run lab
+docker compose up -d          # Postgres
+npm install
+npm run db:migrate            # apply schema
+npm run seed                  # criteria, fixtures, subjects
 ```
 
-Runs every scenario and prints, per scenario: the verdict, the expected winner,
-agreement, and whether the result was clean or shaky.
+Requires `.env` with `ANTHROPIC_API_KEY`, `DATABASE_URL`, and `PROJECTS_DIR`
+(the directory holding the real projects fixtures point at).
 
-## Finding
+## Running an experiment
 
-Most plan pairs from a decent Planner are close. The lab's highest-value use is
-**detecting objective flaws** (missing context, overloaded tasks, hallucinated
-fields, over-engineering) — where the judge is clean and confident — not
-holistic winner-picking on near-ties.
+Experiments are defined in `src/lab/experiments/definitions/`. Run one directly:
+
+```bash
+tsx src/lab/experiments/definitions/0001-baseline-vs-deliverables.ts
+```
+
+Every run, gate result, and comparison is persisted. Inspect the notebook with
+`npm run db:studio`.
+
+## Magent
+
+**The direction layer for agentic coding.**
+
+[Magent](https://www.getmagent.com/) is the direction layer for AI coding. It proposes the
+direction your project should move toward and orchestrates agents that build it, while you
+supervise, approving, sharpening, and giving feedback the agents learn from.
