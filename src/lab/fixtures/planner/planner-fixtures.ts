@@ -7,4 +7,9 @@ export const plannerFixtures: FixturesOptions[] = [
     description: 'Magent brain repo - directions, conventions, fileList',
     dir: DIRS.magentBrain,
   },
+  {
+    key: '0002-magent-ui',
+    description: 'Magent UI repo - directions, conventions, fileList',
+    dir: DIRS.magentUi,
+  },
 ];
