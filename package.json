@@ -1,6 +1,6 @@
 {
   "name": "magent-lab",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "A research lab for Magent's ecosystem",
   "license": "ISC",
   "author": "Palamim",
@@ -13,7 +13,8 @@
     "seed:fixtures": "tsx src/lab/records/seed/seed-fixtures.ts",
     "seed:subjects": "tsx src/lab/records/seed/seed-subjects.ts",
     "seed:criteria": "tsx src/lab/records/seed/seed-criteria.ts",
-    "seed": "npm run seed:criteria && npm run seed:fixtures && npm run seed:subjects"
+    "seed": "npm run seed:criteria && npm run seed:fixtures && npm run seed:subjects",
+    "report": "npx serve src/lab/records/reports"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.107.0",

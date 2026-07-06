@@ -11,4 +11,4 @@ node_modules
 /src/lab/records/db/generated/prisma
 
 # experiments reports
-/src/lab/records/reports/
+/src/lab/records/reports/output
