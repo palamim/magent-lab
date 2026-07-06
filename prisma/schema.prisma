@@ -5,43 +5,75 @@
 
 generator client {
   provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  output   = "../src/lab/records/db/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
 }
 
-/// A versioned experiment input: a direction + conventions + the fixed file context.
-/// Versioned so edits don't retroactively change what old runs were tested against.
-model Fixture {
-  id          String   @id @default(uuid())
-  name        String
-  version     Int
-  direction   String // direction.md content
-  conventions String // conventions.md content
-  fileList    Json // the directory listing (paths)
-  createdAt   DateTime @default(now())
-
-  planRuns PlanRun[]
-
-  @@unique([name, version])
-  @@index([name])
+enum AgentType {
+  planner
+  executor
+  director
 }
 
-/// A versioned criterion definition. Rewording a criterion = a new version,
-/// so you can measure whether a wording change altered its pass/fail behavior.
+/**
+ * FIXTURE: Controlled (frozen) inputs.
+ */
+model Fixture {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  key         String
+  agentType   AgentType
+  description String?
+  dir         String
+  input       Json
+
+  runs Run[]
+
+  @@unique([key, agentType])
+  @@index([agentType])
+}
+
+/**
+ * SUBJECT: The component that's being tested.
+ */
+model Subject {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  key         String
+  agentType   AgentType
+  model       String
+  prompt      String
+  description String?
+
+  runs Run[]
+
+  @@unique([key, agentType])
+  @@index([agentType])
+  @@index([model])
+}
+
+/**
+ * CRITERION: How agents are actually evaluated.
+ */
 model Criterion {
-  id          String        @id @default(uuid())
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
   name        String // 'Grounded', 'Executable', ...
   description String // the exact wording used
+  agentType   AgentType
   kind        CriterionKind // gate | comparative
   version     Int
-  createdAt   DateTime      @default(now())
 
   gateResults GateResult[]
 
-  @@unique([name, version])
+  @@unique([name, version, agentType])
+  @@index([agentType])
   @@index([name])
 }
 
@@ -50,30 +82,26 @@ enum CriterionKind {
   comparative
 }
 
-/// One plan the Planner generated under a specific config, on a specific fixture.
-/// Captures the plan, the cost, and the AGENT BEHAVIOR (tool calls, files read, steps).
-model PlanRun {
+/**
+ * RUN: A single execution event.
+ */
+model Run {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())
 
-  // subject (the variable under test)
-  configName    String // 'baseline', 'distinct-deliverables', ...
-  promptVersion String // label/hash of the exact prompt used
-  model         String // 'claude-haiku-4-5', ...
-
-  // input
+  // fixture
   fixture   Fixture @relation(fields: [fixtureId], references: [id])
   fixtureId String
 
-  // output
-  planJson       Json // the full generated plan — never lose it
-  allGatesPassed Boolean // denormalized for fast filtering
+  // subject
+  subject   Subject @relation(fields: [subjectId], references: [id])
+  subjectId String
+  prompt    String // The exact full built prompt used
+  model     String // 'claude-haiku-4-5', ...
 
-  // cost
-  latencyMs    Int
-  inputTokens  Int
-  outputTokens Int
-  costUsd      Decimal @db.Decimal(10, 6)
+  // experiment
+  experiment   Experiment @relation(fields: [experimentId], references: [id])
+  experimentId String
 
   // agent behavior
   steps         Int // agent loop iterations
@@ -81,50 +109,67 @@ model PlanRun {
   readFileCalls Int // how many read_file calls
   filesRead     Json // which files it chose to read
 
-  gateResults    GateResult[]
-  comparisonsAsA Comparison[] @relation("PlanA")
-  comparisonsAsB Comparison[] @relation("PlanB")
+  // cost & latency
+  latencyMs    Int
+  inputTokens  Int
+  outputTokens Int
+  costUsd      Decimal @db.Decimal(10, 6)
 
-  @@index([configName])
+  // output
+  output Json
+
+  // --- EVALUATION ---
+
+  // gates
+  gateResults    GateResult[]
+  allGatesPassed Boolean
+
+  // comparisons
+  comparisonsAsA Comparison[] @relation("ComparisonRunA")
+  comparisonsAsB Comparison[] @relation("ComparisonRunB")
+
+  @@index([subjectId])
   @@index([fixtureId])
 }
 
-/// The result of judging ONE plan on ONE criterion (the gate phase).
-/// References the versioned criterion so failure rates track across rewordings.
+/**
+ * GATE: A single gate criterion result.
+ */
 model GateResult {
-  id          String    @id @default(uuid())
-  planRun     PlanRun   @relation(fields: [planRunId], references: [id], onDelete: Cascade)
-  planRunId   String
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  run         Run       @relation(fields: [runId], references: [id], onDelete: Cascade)
+  runId       String
   criterion   Criterion @relation(fields: [criterionId], references: [id])
   criterionId String
   passed      Boolean
   reasoning   String
 
-  @@index([planRunId])
+  @@index([runId])
   @@index([criterionId])
   @@index([passed])
 }
 
-/// A head-to-head comparison of two plans (the comparison phase).
-/// decided_by tells you whether a gate failure or the Intent comparison resolved it.
+/**
+ * COMPARISON: A head-to-head comparison of two plans (the comparison phase).
+ */
 model Comparison {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())
 
-  fixtureName String // denormalized for convenience
-
-  planA   PlanRun @relation("PlanA", fields: [planAId], references: [id])
-  planAId String
-  planB   PlanRun @relation("PlanB", fields: [planBId], references: [id])
-  planBId String
+  runA   Run    @relation("ComparisonRunA", fields: [runAId], references: [id])
+  runAId String
+  runB   Run    @relation("ComparisonRunB", fields: [runBId], references: [id])
+  runBId String
 
   winner         Verdict
   decidedBy      DecidedBy
   positionBiased Boolean
-  reasoningJson  Json // full forward + swapped judge output
+  reasoning      Json
 
-  @@index([planAId])
-  @@index([planBId])
+  @@index([runAId])
+  @@index([runBId])
 }
 
 enum Verdict {
@@ -136,4 +181,16 @@ enum Verdict {
 enum DecidedBy {
   gate
   comparison
+}
+
+/**
+ * EXPERIMENT: the orchestrator of evaluations (decides which combinations, how many times)
+ */
+model Experiment {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  description String
+
+  runs Run[]
 }

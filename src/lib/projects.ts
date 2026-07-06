@@ -1,12 +1,12 @@
 import 'dotenv/config';
 import { join } from 'node:path';
 
-const PROJECTS_ROOT = process.env.PROJECTS_ROOT;
-if (!PROJECTS_ROOT) throw new Error('PROJECTS_ROOT not set in .env');
+const PROJECTS_DIR = process.env.PROJECTS_DIR;
+if (!PROJECTS_DIR) throw new Error('PROJECTS_DIR not set in .env');
 
-export const projectRoot = (repo: string): string => join(PROJECTS_ROOT, repo);
+export const dir = (repo: string): string => join(PROJECTS_DIR, repo);
 
-export const ROOTS = {
-  magentBrain: projectRoot('magent'),
-  magentUi: projectRoot('magent-ui'),
+export const DIRS = {
+  magentBrain: dir('magent'),
+  magentUi: dir('magent-ui'),
 } as const;

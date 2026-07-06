@@ -1,8 +1,14 @@
+# dependencies
 node_modules
+
+# environment
 .env
+
+# magent project state
 .magent/
 
-/src/generated/prisma
+# prisma generated client (regenerated from schema)
+/src/lab/records/db/generated/prisma
 
-results.json
-
+# experiments reports
+/src/lab/records/reports/
