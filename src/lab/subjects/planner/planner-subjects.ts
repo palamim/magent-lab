@@ -17,6 +17,12 @@ const basePlannerSubjects: Omit<Subject, 'agentType'>[] = [
     prompt: distinctDeliverablesPrompt,
     description: 'Prompt is more precise on the tasks size and distinct deliverables',
   },
+  {
+    key: 'baseline-sonnet',
+    model: ANTHROPIC_MODELS.CLAUDE_SONNET_4_6,
+    prompt: baselinePrompt,
+    description: 'Baseline Prompt with Sonnet Model',
+  },
 ];
 
 export const plannerSubjects: Subject[] = basePlannerSubjects.map((subject) => ({

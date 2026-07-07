@@ -2,6 +2,7 @@ import type Anthropic from '@anthropic-ai/sdk';
 import { comparePlans } from '@/lab/instruments/judges/plan/plan.judge';
 import { persistComparison } from '@/lab/records/db/comparisons.repo';
 import type { GeneratedRun } from '@/lab/experiments/runner/generate-run';
+import type { Verdict } from '@/lab/instruments/judges/types/common.types';
 
 const unswap = (v: 'A' | 'B' | 'tie'): 'A' | 'B' | 'tie' => (v === 'A' ? 'B' : v === 'B' ? 'A' : 'tie');
 
@@ -11,7 +12,7 @@ export const comparePlannerRuns = async (
   runB: GeneratedRun,
   aPassed: boolean,
   bPassed: boolean,
-): Promise<void> => {
+): Promise<{ winner: Verdict }> => {
   if (!aPassed || !bPassed) {
     const winner = aPassed && bPassed ? 'tie' : aPassed ? 'A' : bPassed ? 'B' : 'tie';
     await persistComparison({
@@ -22,7 +23,7 @@ export const comparePlannerRuns = async (
       positionBiased: false,
       reasoning: { note: 'decided by gate — one or both plans failed gates', aPassed, bPassed },
     });
-    return;
+    return { winner };
   }
 
   const planA = JSON.stringify(runA.plan);
@@ -45,4 +46,6 @@ export const comparePlannerRuns = async (
     positionBiased,
     reasoning: { forward, swapped },
   });
+
+  return { winner };
 };
