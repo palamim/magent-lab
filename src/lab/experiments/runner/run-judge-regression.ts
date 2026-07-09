@@ -14,7 +14,7 @@ export const runJudgeRegression = async (
   for (const diff of diffs) {
     for (let i = 0; i < runsPerDiff; i++) {
       const t0 = Date.now();
-      const evaluation = await runConventionsJudge(anthropic, diff.conventions, diff.diff);
+      const evaluation = await runConventionsJudge(anthropic, diff.conventions, diff.diff, subject.criteriaVersion);
       const latencyMs = Date.now() - t0;
 
       const agreements = checkAgreement(evaluation, diff.expected);

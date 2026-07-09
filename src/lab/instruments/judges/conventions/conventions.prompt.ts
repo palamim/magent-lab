@@ -1,11 +1,4 @@
-import { conventionsCriteria } from '@/lab/instruments/judges/conventions/conventions.criteria';
-
-const buildCriteria = () =>
-  conventionsCriteria.map((c, i) => `${i + 1}. [${c.name}]\n   ${c.description}`).join('\n\n');
-
-export const conventionsPrompt = (conventions: string, codeDiff: string): string => {
-  const criteria = buildCriteria();
-
+export const conventionsPrompt = (conventions: string, codeDiff: string, criteria: string): string => {
   return `You are the Judge. You judge a generated code under CONVENTIONS.
 You have a list of CRITERIA, each framed as a yes/no question.
 
