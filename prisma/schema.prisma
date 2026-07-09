@@ -82,6 +82,14 @@ enum CriterionKind {
   comparative
 }
 
+enum CriterionCategory {
+  PROJECT_CONVENTIONS
+  FUNCTIONAL_CORRECTNESS
+  CODE_QUALITY
+  SAFETY_SECURITY
+  TESTING_DOCUMENTATION
+}
+
 /**
  * RUN: A single execution event.
  */
@@ -130,6 +138,22 @@ model Run {
 
   @@index([subjectId])
   @@index([fixtureId])
+}
+
+model JudgeRun {
+  id           String   @id @default(uuid())
+  createdAt    DateTime @default(now())
+  experimentId String
+  subjectKey   String // which judge config
+  diffKey      String // which labeled diff
+  model        String
+  latencyMs    Int
+  allMatched   Boolean // did every criterion match ground truth?
+  agreements   Json // [{ criterion, expected, actual, matched }]
+
+  @@index([experimentId])
+  @@index([subjectKey])
+  @@index([diffKey])
 }
 
 /**

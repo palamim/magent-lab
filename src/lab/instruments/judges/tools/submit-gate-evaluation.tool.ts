@@ -9,28 +9,29 @@ const isGate = (g: unknown): g is GateAnswer => GATE_VERDICTS.includes(g as Gate
 export const submitGateEvaluationTool: Anthropic.Tool = {
   name: 'submit_gate_evaluation',
   description:
-    'Submit the gate evaluation. Judge the plan on EACH criterion individually, then give your reasoning and your yes/no answer. Call this exactly once.',
+    'Submit the gate evaluation. Judge the code on EACH criterion individually, then give your reasoning and your yes/no answer. Call this exactly once.',
   input_schema: {
     type: 'object',
     properties: {
       criteria: {
         type: 'array',
-        description: 'One entry per criterion, in the order given. For each, judge the plan on THAT criterion only.',
+        description: 'One entry per criterion, in the order given. For each, judge the code on THAT criterion only.',
         items: {
           type: 'object',
           properties: {
             criterion: {
               type: 'string',
-              description: 'The name of the criterion being judged.',
+              description:
+                'The name of the criterion being judged. Must be EXACTLY the bracketed name (e.g. Architectural Compliance), not the description',
             },
             reasoning: {
               type: 'string',
-              description: 'Judge the plan on THIS criterion only, in 1-2 sentences.',
+              description: 'Judge the code on THIS criterion only, in 1-2 sentences.',
             },
             answer: {
               type: 'string',
               enum: ['yes', 'no'],
-              description: 'If the plan respects this single criterion.',
+              description: 'If the code respects this single criterion.',
             },
           },
           required: ['criterion', 'reasoning', 'answer'],

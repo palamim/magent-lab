@@ -1,3 +1,5 @@
+import type { CriterionCategory } from '@/lab/records/db/generated/prisma/client';
+
 export type GateAnswer = 'yes' | 'no';
 
 export interface GateJudgment {
@@ -22,4 +24,11 @@ export interface ComparativeEvaluation {
   criteria: CriterionJudgment[];
   holisticWinner: Verdict;
   summary: string;
+}
+
+export interface Criterion {
+  name: string;
+  description: string;
+  category: CriterionCategory;
+  version: number;
 }
