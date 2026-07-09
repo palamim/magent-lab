@@ -1,6 +1,6 @@
 import type Anthropic from '@anthropic-ai/sdk';
 
-import { ANTHROPIC_MODELS } from '@/lab/types/models.types';
+import { ANTHROPIC_MODELS, type CheapestModels } from '@/lab/types/models.types';
 import {
   executeSubmitGateEvaluation,
   submitGateEvaluationTool,
@@ -9,12 +9,10 @@ import type { GateEvaluation } from '@/lab/instruments/judges/types/common.types
 
 const MAX_JUDGE_TOKENS = 4096;
 
-type CheapModel = typeof ANTHROPIC_MODELS.CLAUDE_HAIKU_4_5;
-
 export const runJudge = async (
   client: Anthropic,
   prompt: string,
-  model: CheapModel = ANTHROPIC_MODELS.CLAUDE_HAIKU_4_5,
+  model: CheapestModels = ANTHROPIC_MODELS.CLAUDE_HAIKU_4_5,
 ): Promise<GateEvaluation> => {
   const message = await client.messages.create({
     max_tokens: MAX_JUDGE_TOKENS,
