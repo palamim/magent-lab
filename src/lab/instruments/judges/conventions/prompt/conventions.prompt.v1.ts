@@ -1,4 +1,4 @@
-export const conventionsPrompt = (conventions: string, codeDiff: string, criteria: string): string => {
+export const conventionsPromptV1 = (conventions: string, codeDiff: string, criteria: string): string => {
   return `You are the Judge. You judge a generated code under CONVENTIONS.
 You have a list of CRITERIA, each framed as a yes/no question.
 

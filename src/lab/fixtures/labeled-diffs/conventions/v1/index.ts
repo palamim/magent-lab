@@ -1,11 +1,12 @@
 import type { LabeledDiff } from '@/lab/fixtures/labeled-diffs/labeled-diff.types';
-import { respectsConventionsDiff } from '@/lab/fixtures/labeled-diffs/conventions/v1/0001-respects-conventions copy 4';
+import { respectsConventionsDiff } from '@/lab/fixtures/labeled-diffs/conventions/v1/0001-respects-conventions';
 import { wrongFileNamingDiff } from '@/lab/fixtures/labeled-diffs/conventions/v1/0002-wrong-file-naming';
 import { wrongComponentNamingDiff } from '@/lab/fixtures/labeled-diffs/conventions/v1/0003-wrong-component-naming';
 import { wrongFileAndComponentNamingDiff } from '@/lab/fixtures/labeled-diffs/conventions/v1/0004-wrong-file-and-component-naming';
 import { moduleMisplacedInComponentsDiff } from '@/lab/fixtures/labeled-diffs/conventions/v1/0005-module-misplaced-in-components';
 import { moduleMisplacedInHooksDiff } from '@/lab/fixtures/labeled-diffs/conventions/v1/0006-module-misplaced-in-hooks';
 import { fileWrongPlaceAndNamingDiff } from '@/lab/fixtures/labeled-diffs/conventions/v1/0007-file-wrong-place-and-naming';
+import { fileMisplacedWrongComponentNamingDiff } from '@/lab/fixtures/labeled-diffs/conventions/v1/0008-file-misplaced-wrong-component-naming';
 import { anyTypingDiff } from '@/lab/fixtures/labeled-diffs/conventions/v1/0009-any-typing';
 import { anyTypingAndFileMisplacedDiff } from '@/lab/fixtures/labeled-diffs/conventions/v1/0010-any-typing-and-file-misplaced';
 import { noUseClientDiff } from '@/lab/fixtures/labeled-diffs/conventions/v1/0011-no-use-client';
@@ -19,7 +20,7 @@ import { wrongFilePlaceAndWrongCssNamingDiff } from '@/lab/fixtures/labeled-diff
 import { wrongFilePlaceNamingAndNoUseClientDiff } from '@/lab/fixtures/labeled-diffs/conventions/v1/0019-wrong-file-place-naming-and-no-use-client';
 import { wrongHookNamingInsideDiff } from '@/lab/fixtures/labeled-diffs/conventions/v1/0020-wrong-hook-naming-inside';
 
-export const conventionsLabeledDiffs: LabeledDiff[] = [
+export const conventionsLabeledDiffsV1: LabeledDiff[] = [
   respectsConventionsDiff,
   wrongFileNamingDiff,
   wrongComponentNamingDiff,
@@ -27,6 +28,7 @@ export const conventionsLabeledDiffs: LabeledDiff[] = [
   moduleMisplacedInComponentsDiff,
   moduleMisplacedInHooksDiff,
   fileWrongPlaceAndNamingDiff,
+  fileMisplacedWrongComponentNamingDiff,
   anyTypingDiff,
   anyTypingAndFileMisplacedDiff,
   noUseClientDiff,

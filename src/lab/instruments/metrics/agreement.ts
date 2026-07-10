@@ -6,6 +6,7 @@ export interface CriterionAgreement {
   expected: ExpectedAnswer;
   actual: ExpectedAnswer;
   matched: boolean;
+  reasoning: string;
 }
 
 export const checkAgreement = (
@@ -19,6 +20,12 @@ export const checkAgreement = (
         `Judge returned criterion "${c.criterion}" with no ground-truth label. Labels: ${Object.keys(expected).join(', ')}`,
       );
     }
-    return { criterion: c.criterion, expected: exp, actual: c.answer, matched: c.answer === exp };
+    return {
+      criterion: c.criterion,
+      expected: exp,
+      actual: c.answer,
+      matched: c.answer === exp,
+      reasoning: c.reasoning,
+    };
   });
 };

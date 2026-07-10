@@ -2,7 +2,7 @@ import 'dotenv/config';
 
 import { gateCriteria, comparativeCriteria } from '@/lab/instruments/judges/plan/plan.criteria';
 import { prisma } from '@/lab/records/db/client';
-import { persistCriterion } from '../db/criteria.repo';
+import { persistCriterion } from '@/lab/records/db/criteria.repo';
 import { AgentType } from '@/lab/types/common.types';
 
 const seed = async () => {
