@@ -1,5 +1,5 @@
 import { prisma } from '@/lab/records/db/client';
-import type { AgentType } from '@/lab/types/common.types';
+import { AgentType } from '@/lab/types/common.types';
 
 export interface AgentRunInput {
   agentType: AgentType;
@@ -38,4 +38,13 @@ export const recordAgentRun = async (input: AgentRunInput): Promise<string> => {
     },
   });
   return run.id;
+};
+
+export const getArchitectRunByRepoKey = async (repoKey: string) => {
+  const row = await prisma.agentRun.findFirst({
+    where: { repoKey: repoKey, agentType: AgentType.ARCHITECT },
+    orderBy: { createdAt: 'desc' },
+  });
+  if (!row) throw new Error(`No architect run with repo key: ${repoKey}`);
+  return row;
 };

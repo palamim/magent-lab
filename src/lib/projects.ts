@@ -10,3 +10,7 @@ export const DIRS = {
   magentBrain: dir('magent'),
   magentUi: dir('magent-ui'),
 } as const;
+
+export const getRepoKey = (dir: string) => {
+  return dir.split('/').filter(Boolean).pop();
+};

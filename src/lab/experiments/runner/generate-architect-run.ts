@@ -1,9 +1,10 @@
 import 'dotenv/config';
 
 import { computeCost } from '@/lab/instruments/metrics/cost';
-import { generateConventions } from '@/lab/experiments/api/generate-conventions.api';
+import { generateConventions } from '@/lab/experiments/api/conventions.api';
 import { AgentType, type ArchitectRunResult } from '@/lab/types/common.types';
 import { recordAgentRun } from '@/lab/records/db/agent-runs.repo';
+import { getRepoKey } from '@/lib/projects';
 
 export interface GeneratedArchitectRun {
   runId: string;
@@ -14,7 +15,7 @@ export const generateArchitectRun = async (dir: string): Promise<GeneratedArchit
   const t0 = Date.now();
   const result: ArchitectRunResult = await generateConventions(dir);
   const latencyMs = Date.now() - t0;
-  const repoKey = dir.split('/').filter(Boolean).pop() ?? dir;
+  const repoKey = getRepoKey(dir) ?? dir;
 
   const runId = await recordAgentRun({
     agentType: AgentType.ARCHITECT,
