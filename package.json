@@ -1,6 +1,6 @@
 {
   "name": "magent-lab",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "description": "A research lab for Magent's ecosystem",
   "license": "ISC",
   "author": "Palamim",
@@ -11,6 +11,7 @@
     "db:generate": "prisma generate",
     "db:studio": "prisma studio",
     "generate:conventions": "tsx src/lab/experiments/runner/generate-architect-run.ts",
+    "script:write-conventions": "tsx src/scripts/write-conventions.ts",
     "seed:fixtures": "tsx src/lab/records/seed/seed-fixtures.ts",
     "seed:subjects": "tsx src/lab/records/seed/seed-subjects.ts",
     "seed:criteria": "tsx src/lab/records/seed/seed-criteria.ts",
