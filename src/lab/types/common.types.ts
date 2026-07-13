@@ -2,6 +2,7 @@ export enum AgentType {
   DIRECTOR = 'director',
   EXECUTOR = 'executor',
   PLANNER = 'planner',
+  ARCHITECT = 'architect',
 }
 
 export enum TaskStatus {
@@ -29,12 +30,21 @@ export interface Plan {
   tasks: Task[];
 }
 
-export interface PlannerRunResult {
-  plan: Plan;
+export interface BaseAgentRunResult {
   steps: number;
   toolCalls: number;
   readFileCalls: number;
   filesRead: string[];
   inputTokens: number;
   outputTokens: number;
+}
+
+export interface PlannerRunResult extends BaseAgentRunResult {
+  plan: Plan;
+}
+
+export interface ArchitectRunResult extends BaseAgentRunResult {
+  conventions: string;
+  model: string;
+  prompt: string;
 }

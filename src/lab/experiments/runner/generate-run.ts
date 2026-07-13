@@ -2,7 +2,7 @@ import { getPlannerFixture } from '@/lab/records/db/fixtures.repo';
 import { getPlannerSubject } from '@/lab/records/db/subjects.repo';
 import { persistRun } from '@/lab/records/db/runs.repo';
 import { buildPrompt } from '@/lab/experiments/runner/utils/build-prompt.utils';
-import { generatePlan } from '@/lab/experiments/runner/utils/generate-plan.utils';
+import { generatePlan } from '@/lab/experiments/api/generate-plan.api';
 import { computeCost } from '@/lab/instruments/metrics/cost';
 import type { PlannerInput } from '@/lab/fixtures/fixtures.types';
 

@@ -16,6 +16,7 @@ enum AgentType {
   planner
   executor
   director
+  architect
 }
 
 /**
@@ -154,6 +155,30 @@ model JudgeRun {
   @@index([experimentId])
   @@index([subjectKey])
   @@index([diffKey])
+}
+
+model AgentRun {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  agentType     AgentType
+  model         String
+  prompt        String
+  steps         Int
+  toolCalls     Int
+  readFileCalls Int
+  filesRead     String[]
+  inputTokens   Int
+  outputTokens  Int
+  latencyMs     Int
+  purpose       String
+  repoKey       String
+  costUsd       Decimal   @db.Decimal(10, 6)
+
+  //output
+  output Json
+
+  @@index([agentType])
 }
 
 /**
