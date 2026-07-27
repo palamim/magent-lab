@@ -1,0 +1,582 @@
+{
+  "studyId": "conventions-judge-regression-c0c23c78-312a-4aca-bc7c-38fa62b48ed9",
+  "generatedAt": "2026-07-27T13:52:37.847Z",
+  "experimentId": "c0c23c78-312a-4aca-bc7c-38fa62b48ed9",
+  "gitCommitSha": "d3ddd947a901f69ec2e3e3ee40ab0c218259f803",
+  "subject": {
+    "subjectKey": "conventions-judge-v2",
+    "model": "claude-haiku-4-5",
+    "modelPinned": false,
+    "criteriaVersion": 2,
+    "promptVersion": 2,
+    "temperature": null,
+    "temperatureNote": "not recorded — runJudge() does not set a temperature parameter on the Anthropic call; the API default applies and is itself unpinned"
+  },
+  "dataset": {
+    "nDiffs": 20,
+    "replicatesPerDiff": 5,
+    "classBalance": [
+      {
+        "criterion": "Structure and Placement Rules",
+        "noCount": 9,
+        "yesCount": 11
+      },
+      {
+        "criterion": "Naming Conventions",
+        "noCount": 13,
+        "yesCount": 7
+      },
+      {
+        "criterion": "File Rules",
+        "noCount": 5,
+        "yesCount": 15
+      },
+      {
+        "criterion": "Code Idioms",
+        "noCount": 0,
+        "yesCount": 20
+      }
+    ]
+  },
+  "consistency": {
+    "splitHistogram": {
+      "5-0": 68,
+      "4-1": 8,
+      "3-2": 4
+    },
+    "perCriterion": [
+      {
+        "criterion": "Structure and Placement Rules",
+        "selfAgreementKappa": 0.959742351046699
+      },
+      {
+        "criterion": "Naming Conventions",
+        "selfAgreementKappa": 0.8799519807923171
+      },
+      {
+        "criterion": "File Rules",
+        "selfAgreementKappa": 0.6783088235294119
+      },
+      {
+        "criterion": "Code Idioms",
+        "selfAgreementKappa": 0.21874999999999764
+      }
+    ]
+  },
+  "validity": {
+    "perCriterion": [
+      {
+        "criterion": "Structure and Placement Rules",
+        "majorityVoteAccuracy": {
+          "value": 1,
+          "n": 20,
+          "method": "clopper-pearson",
+          "ci": {
+            "low": 0.8315665290169147,
+            "high": 1
+          }
+        },
+        "sensitivity": {
+          "value": 1,
+          "n": 9,
+          "method": "clopper-pearson",
+          "ci": {
+            "low": 0.6637328831200568,
+            "high": 1
+          }
+        },
+        "specificity": {
+          "value": 1,
+          "n": 11,
+          "method": "clopper-pearson",
+          "ci": {
+            "low": 0.7150858470818457,
+            "high": 1
+          }
+        },
+        "clusterBootstrapAgreement": {
+          "estimate": 0.99,
+          "ci": {
+            "low": 0.97,
+            "high": 1
+          },
+          "method": "cluster-bootstrap",
+          "seed": 42,
+          "iterations": 2000,
+          "nClusters": 20
+        }
+      },
+      {
+        "criterion": "Naming Conventions",
+        "majorityVoteAccuracy": {
+          "value": 0.85,
+          "n": 20,
+          "method": "clopper-pearson",
+          "ci": {
+            "low": 0.6210731734546859,
+            "high": 0.9679290628143025
+          }
+        },
+        "sensitivity": {
+          "value": 0.7692307692307693,
+          "n": 13,
+          "method": "clopper-pearson",
+          "ci": {
+            "low": 0.4618684607659592,
+            "high": 0.9496189265085606
+          }
+        },
+        "specificity": {
+          "value": 1,
+          "n": 7,
+          "method": "clopper-pearson",
+          "ci": {
+            "low": 0.5903836027749965,
+            "high": 1
+          }
+        },
+        "clusterBootstrapAgreement": {
+          "estimate": 0.82,
+          "ci": {
+            "low": 0.6500000000000001,
+            "high": 0.96
+          },
+          "method": "cluster-bootstrap",
+          "seed": 42,
+          "iterations": 2000,
+          "nClusters": 20
+        }
+      },
+      {
+        "criterion": "File Rules",
+        "majorityVoteAccuracy": {
+          "value": 0.95,
+          "n": 20,
+          "method": "clopper-pearson",
+          "ci": {
+            "low": 0.7512672372279723,
+            "high": 0.9987349105020502
+          }
+        },
+        "sensitivity": {
+          "value": 1,
+          "n": 5,
+          "method": "clopper-pearson",
+          "ci": {
+            "low": 0.47817624989501806,
+            "high": 1
+          }
+        },
+        "specificity": {
+          "value": 0.9333333333333333,
+          "n": 15,
+          "method": "clopper-pearson",
+          "ci": {
+            "low": 0.680515433421697,
+            "high": 0.9983135697586474
+          }
+        },
+        "clusterBootstrapAgreement": {
+          "estimate": 0.9100000000000001,
+          "ci": {
+            "low": 0.8300000000000001,
+            "high": 0.9700000000000001
+          },
+          "method": "cluster-bootstrap",
+          "seed": 42,
+          "iterations": 2000,
+          "nClusters": 20
+        }
+      },
+      {
+        "criterion": "Code Idioms",
+        "majorityVoteAccuracy": {
+          "value": 1,
+          "n": 20,
+          "method": "clopper-pearson",
+          "ci": {
+            "low": 0.8315665290169147,
+            "high": 1
+          }
+        },
+        "sensitivity": {
+          "value": null,
+          "n": 0,
+          "method": "clopper-pearson",
+          "reason": "not measurable — no diffs labeled \"no\" for this criterion"
+        },
+        "specificity": {
+          "value": 1,
+          "n": 20,
+          "method": "clopper-pearson",
+          "ci": {
+            "low": 0.8315665290169147,
+            "high": 1
+          }
+        },
+        "clusterBootstrapAgreement": {
+          "estimate": 0.9600000000000002,
+          "ci": {
+            "low": 0.9,
+            "high": 1
+          },
+          "method": "cluster-bootstrap",
+          "seed": 42,
+          "iterations": 2000,
+          "nClusters": 20
+        }
+      }
+    ]
+  },
+  "divergentCells": [
+    {
+      "diffKey": "0002-wrong-file-naming",
+      "criterion": "Structure and Placement Rules",
+      "split": "4-1",
+      "groundTruth": "yes",
+      "replicates": [
+        {
+          "actual": "yes",
+          "reasoning": "The file is moved from `src/modules/main-panel/direction.view.tsx` to `src/modules/main-panel/DIRECTION_VIEW.tsx`. The placement within `src/modules/main-panel/` is correct for a feature-area view component. However, the filename casing violates the structure expectations. Since structure is about directory placement and this remains in the correct directory, the placement rule is satisfied, but the filename casing issue belongs to the Naming criterion."
+        },
+        {
+          "actual": "yes",
+          "reasoning": "The file `direction.view.tsx` is correctly placed in `src/modules/main-panel/`, which is the appropriate location for a view component within the main-panel feature area. The component structure with a private sub-component `DocPreview` defined within the same file is also correct per conventions. No files are added or moved to incorrect directories."
+        },
+        {
+          "actual": "yes",
+          "reasoning": "The file is being renamed from 'direction.view.tsx' to 'DIRECTION_VIEW.tsx' but remains in 'src/modules/main-panel/', which is the correct directory for view components according to the structure rules. However, the file is a view component that should follow kebab-case naming, not SCREAMING_SNAKE_CASE. The directory placement is correct, but the filename violates the naming convention."
+        },
+        {
+          "actual": "no",
+          "reasoning": "The file is moved from src/modules/main-panel/direction.view.tsx to src/modules/main-panel/DIRECTION_VIEW.tsx. According to the Structure rules, it must remain in src/modules/main-panel/ (correct), but the file naming violates the placement convention. Additionally, the DocPreview sub-component is correctly kept as a private component within the same file (not exported), which follows the placement rule that module-level private sub-components belong in the same file."
+        },
+        {
+          "actual": "yes",
+          "reasoning": "The file is moved from `src/modules/main-panel/direction.view.tsx` to `src/modules/main-panel/DIRECTION_VIEW.tsx`. The directory placement (`src/modules/main-panel/`) is correct for a view component in a feature area. However, the filename itself violates placement rules because view files must use kebab-case per the Naming Conventions section, not SCREAMING_SNAKE_CASE. The directory is correct; the filename casing is wrong. Judging strictly on placement rules (directory structure), this passes."
+        }
+      ]
+    },
+    {
+      "diffKey": "0004-wrong-file-and-component-naming",
+      "criterion": "File Rules",
+      "split": "3-2",
+      "groundTruth": "yes",
+      "replicates": [
+        {
+          "actual": "no",
+          "reasoning": "The file has `'use client';` as the first line, which is correct since it uses `useState` and client-side React features. The component is exported as a named export (`export const direction-view`), which is correct for non-route files. However, the export name itself (`direction-view` in kebab-case) violates the File Rules requirement that React components must be named in PascalCase, and the conventions explicitly state named exports should use proper PascalCase naming for components."
+        },
+        {
+          "actual": "no",
+          "reasoning": "The file correctly has `'use client';` as its first line since it uses client-side React features (useState, event handlers). The component uses named exports as required. However, the component name `direction-view` should be PascalCase, not kebab-case, which is a violation of the component export requirement (though technically it is a named export, it violates naming conventions separately)."
+        },
+        {
+          "actual": "yes",
+          "reasoning": "The file has `'use client';` as the first line, which is correct since it uses client-side React features (useState, event handlers, context). It exports a named export (`export const direction-view`), which is compliant with the rule that component files must export as named exports (not default). The file structure is valid."
+        },
+        {
+          "actual": "yes",
+          "reasoning": "The file correctly begins with `'use client';` since it uses client-side React features like `useState`. The component uses named exports (`export const`), and the sub-component `DocPreview` is a private PascalCase constant defined within the file and not exported, which is correct. All file shape requirements are met."
+        },
+        {
+          "actual": "no",
+          "reasoning": "The file correctly retains `'use client';` as the first line since it uses client-side React features (useState, hooks, event handlers). The component is exported as a named export (`export const direction-view`), which is correct for non-Next.js route files. However, the export name `direction-view` is not a valid JavaScript identifier (contains hyphens), making it technically invalid as a named export binding name."
+        }
+      ]
+    },
+    {
+      "diffKey": "0005-module-misplaced-in-components",
+      "criterion": "File Rules",
+      "split": "4-1",
+      "groundTruth": "yes",
+      "replicates": [
+        {
+          "actual": "yes",
+          "reasoning": "The file correctly has `'use client';` as its first line since it uses client-side React features (useState). The component is exported as a named export (`export const DirectionView`), which is correct for src/ components. The file does not import apiClient and makes no API calls, so no API file rules apply. All file rules are satisfied."
+        },
+        {
+          "actual": "no",
+          "reasoning": "The file correctly has `'use client';` as its first line since it uses client-side React features (useState, event handlers). It exports `DirectionView` as a named export (correct per rules for non-app files). The `DocPreview` component is not explicitly exported but is defined as a function at module level, which violates the rule that module-level private sub-components must be `const` declarations, not function declarations. All exports are named, not default, which is correct for non-app files."
+        },
+        {
+          "actual": "yes",
+          "reasoning": "The file has 'use client'; as its first line, which is correct since it uses useState and client-side React features. The component is exported as a named export (export const DirectionView), which is correct for src/ components. The private sub-component DocPreview is not exported, which is correct. No default exports are used in src/ files."
+        },
+        {
+          "actual": "yes",
+          "reasoning": "The file correctly includes `'use client';` as its first line, which is required since it uses client-side React features (useState, onClick handlers, context via useMagent). The DirectionView component is exported as a named export (correct for non-app/ src/ files). All imports follow proper patterns, and the file structure complies with the File Rules section requirements."
+        },
+        {
+          "actual": "yes",
+          "reasoning": "The file begins with 'use client'; as its first line (required since it uses client-side React features like useState, event handlers, and context). It exports the component as a named export (export const DirectionView), not a default export, which is correct for src/ files. The file is a .tsx component file, which is correct. All file shape requirements are satisfied."
+        }
+      ]
+    },
+    {
+      "diffKey": "0005-module-misplaced-in-components",
+      "criterion": "Naming Conventions",
+      "split": "4-1",
+      "groundTruth": "yes",
+      "replicates": [
+        {
+          "actual": "yes",
+          "reasoning": "All naming follows conventions: the file is `direction.view.tsx` (kebab-case with `.view.tsx` suffix), the main exported component is `DirectionView` (PascalCase), the private sub-component `DocPreview` is PascalCase as a non-exported constant within the file, the interface `DocPreviewProps` is PascalCase without I-prefix, and all style variables use `var(--kebab-case)` format. All naming requirements are met."
+        },
+        {
+          "actual": "no",
+          "reasoning": "File naming is correct: `direction.view.tsx` uses the `.view.tsx` suffix as required. Component names are correct: `DirectionView` and `DocPreview` are PascalCase. Interface `DocPreviewProps` is PascalCase without `I` prefix. However, the `DocPreview` component is a module-level private sub-component (used only within one file) and should be defined as a `const` named constant, not as an exported function declaration. The current implementation treats it as a named export implicitly through its declaration style."
+        },
+        {
+          "actual": "yes",
+          "reasoning": "File name direction.view.tsx is correct (kebab-case with .view.tsx suffix). The component is exported as PascalCase (DirectionView). The private sub-component DocPreview is correctly named in PascalCase and defined as a const in the same file without export. The interface DocPreviewProps follows PascalCase without I-prefix. All naming conventions are adhered to."
+        },
+        {
+          "actual": "yes",
+          "reasoning": "All naming conventions are properly adhered to: the file is named `direction.view.tsx` (correct `.view.tsx` suffix for view components), the exported component is `DirectionView` (PascalCase), the private sub-component `DocPreview` is a PascalCase constant defined in the same file, the interface is `DocPreviewProps` (PascalCase without I prefix), and all variables/functions use appropriate casing. The naming is fully compliant."
+        },
+        {
+          "actual": "yes",
+          "reasoning": "All naming conventions are respected: the file is named direction.view.tsx (correct .view.tsx suffix for a view component), the exported component DirectionView is PascalCase (correct for React components), the private sub-component DocPreview is a PascalCase constant defined in the same file without export (correct for module-level private components), and the interface DocPreviewProps follows PascalCase without I-prefix (correct). All entities follow their specified naming rules."
+        }
+      ]
+    },
+    {
+      "diffKey": "0006-module-misplaced-in-hooks",
+      "criterion": "Naming Conventions",
+      "split": "4-1",
+      "groundTruth": "yes",
+      "replicates": [
+        {
+          "actual": "yes",
+          "reasoning": "All naming conventions are correctly applied: the file uses `.view.tsx` suffix (`direction.view.tsx`), the main component `DirectionView` and sub-component `DocPreview` are PascalCase, the interface `DocPreviewProps` follows PascalCase without `I` prefix, the private variable `DocPreview` is PascalCase constant, and CSS variables use kebab-case (`var(--border)`, `var(--surface-raised)`, etc.). All naming rules are satisfied."
+        },
+        {
+          "actual": "no",
+          "reasoning": "File naming violates conventions: `direction.view.tsx` in `src/hooks/` is incorrect because `.view.tsx` suffix is reserved for module-level main panel views in `src/modules/`, not for files in `src/hooks/`. The internal `DocPreview` component is correctly named in `PascalCase` as a private sub-component. The `DocPreviewProps` interface correctly uses `PascalCase` without `I` prefix. However, the file placement issue creates a naming/intent mismatch."
+        },
+        {
+          "actual": "yes",
+          "reasoning": "The file name `direction.view.tsx` is correct and adheres to the `.view.tsx` suffix requirement for view components. The component export `DirectionView` is correctly PascalCase. The private sub-component `DocPreview` is correctly PascalCase as a non-exported constant. The interface `DocPreviewProps` is correctly PascalCase without an `I` prefix. All naming conventions are properly followed."
+        },
+        {
+          "actual": "yes",
+          "reasoning": "The file name `direction.view.tsx` correctly follows the `.view.tsx` suffix rule for view components, and the component export `DirectionView` is correctly `PascalCase`. The new private sub-component `DocPreview` is correctly `PascalCase` and defined in the same file without export. All naming conventions for identifiers and file naming are adhered to."
+        },
+        {
+          "actual": "yes",
+          "reasoning": "The file name `direction.view.tsx` correctly follows the `.view.tsx` suffix naming rule. All new entity names follow conventions: `DocPreviewProps` (PascalCase interface), `DocPreview` (PascalCase component constant), `setExpanded` (camelCase state setter), and exported component `DirectionView` (PascalCase). All naming is correct."
+        }
+      ]
+    },
+    {
+      "diffKey": "0007-file-wrong-place-and-naming",
+      "criterion": "File Rules",
+      "split": "3-2",
+      "groundTruth": "yes",
+      "replicates": [
+        {
+          "actual": "no",
+          "reasoning": "The file correctly has `'use client';` as the first line since it uses client-side React features (useState, context, event handlers). The component is exported as a named export (`export const DirectionView`), which is correct for a source component file. However, moving a view component to `src/lib/` is structurally wrong—view components belong in modules, not in the lib directory."
+        },
+        {
+          "actual": "yes",
+          "reasoning": "The file retains `'use client';` as its first line, which is correct since it uses React state (`useState`), effects, and client-side features. All exports are named exports (not default), which complies with the requirement that component files in `src/` must export as named exports. The file structure is otherwise compliant."
+        },
+        {
+          "actual": "yes",
+          "reasoning": "The file correctly includes `'use client';` as the first line since it uses client-side React features (useState, useContext). Components are exported as named exports (`export const DirectionView`). The file structure complies with the requirement that client components have the directive. However, this assessment is limited to file-level rules in isolation; the placement violation is handled separately."
+        },
+        {
+          "actual": "yes",
+          "reasoning": "The file correctly retains `'use client';` at the top (line 1), which is required since it uses `useState`, context via `useMagent`, and client-side event handlers. The component `DirectionView` is exported as a named export, which is correct per the rules. The `DocPreview` sub-component is a private PascalCase constant (not exported), which complies with module-level private sub-component rules. However, the file placement violation undermines the overall compliance assessment."
+        },
+        {
+          "actual": "no",
+          "reasoning": "The file correctly has 'use client' as its first line since it uses React hooks (useState). The DirectionView component is exported as a named export (correct for src/ files). However, the file is now in src/lib/ which should contain only pure utility functions with no React—this violates the conceptual requirement that only rendering/client-heavy code belongs in files with 'use client' directives in src/lib/."
+        }
+      ]
+    },
+    {
+      "diffKey": "0011-no-use-client",
+      "criterion": "File Rules",
+      "split": "4-1",
+      "groundTruth": "no",
+      "replicates": [
+        {
+          "actual": "yes",
+          "reasoning": "The file is a component in `src/modules/` that uses client-side React features (`useState`), so it correctly includes `'use client';` as the first statement. The main export `DirectionView` is a named export as required for component files (not default). All file rules are correctly applied."
+        },
+        {
+          "actual": "no",
+          "reasoning": "The file must have `'use client';` as its first line since it uses React hooks (`useState`) and client-side features. However, the diff shows `import { useState } from 'react';` at the very top without `'use client';` preceding it. This is a violation of the File Rules requirement that every file in `src/` rendering JSX and using client-side React features must have `'use client';` as its first line."
+        },
+        {
+          "actual": "no",
+          "reasoning": "The file must have `'use client';` as its first line since it uses `useState` (client-side state) and React hooks. However, the diff shows `import { useState } from 'react';` as the first line with no `'use client';` directive. This violates the requirement that \"every file in `src/` that renders JSX and uses client-side React features (state, effects, event handlers, context) must have `'use client';` as its first line.\" The component is exported as a named export (`export const DirectionView`), which is correct, but the missing `'use client';` is a violation."
+        },
+        {
+          "actual": "no",
+          "reasoning": "The file uses client-side React features (useState, event handlers) so it must start with 'use client;' — however, the diff does not show the first line, so we examine what is provided. The file exports a named export `DirectionView` (not default), which is correct for src/components files. The file uses `useState` from React, and should have 'use client;' as the first line. Since the diff doesn't show line 1, we must evaluate based on what's shown: the code clearly requires 'use client;' due to useState usage, but we cannot confirm from this diff whether it's present. Given the context of a .view.tsx file with client features, this is a critical omission if not present, but the diff snippet may be incomplete. Assuming proper file structure with 'use client;' at the top (standard for this type of file), the answer is yes; if it's missing, it's no. Based on the code shown requiring client features, the safest evaluation is that it should have 'use client;'."
+        },
+        {
+          "actual": "no",
+          "reasoning": "The file lacks `'use client';` as the first line, which is required because it uses client-side React features: `useState` (state hook), `onClick` event handlers, and context consumption via `useMagent()`. According to the conventions, every file in `src/` that renders JSX and uses client-side React features must have `'use client';` as its first line. This is a clear violation."
+        }
+      ]
+    },
+    {
+      "diffKey": "0015-wrong-css-variable-naming",
+      "criterion": "Code Idioms",
+      "split": "3-2",
+      "groundTruth": "yes",
+      "replicates": [
+        {
+          "actual": "yes",
+          "reasoning": "All imports use the `@/` path alias correctly (e.g., `@/components/thinking-dots`, `@/providers/magent.provider`). The code uses CSS custom properties via inline `style` props for design-token colors (e.g., `var(--foreground-muted)`, `var(--accent)`, `var(--background)`). Tailwind utilities are used appropriately for layout/spacing (e.g., `className=\"flex flex-col gap-3 px-8 py-6\"`). However, the repeated use of `var(--SurfaceRaised)` with incorrect casing violates the idiom of using kebab-case CSS variables, though this is primarily a naming issue."
+        },
+        {
+          "actual": "no",
+          "reasoning": "The code uses `@/` path aliases correctly for all imports (`@/components/thinking-dots`, `@/providers/magent.provider`). CSS custom properties are used via inline styles for design-token colors. Tailwind utilities are used for layout/spacing (`px-8`, `py-6`, `flex`, `gap-3`, etc.). However, the violation of CSS variable naming (using PascalCase in `var(--SurfaceRaised)`) is an idiom violation of the mandated design-token format. Additionally, interfaces are correctly used instead of type aliases for object shapes. The code idioms are mostly followed but the CSS variable casing breaks the design-token custom property convention."
+        },
+        {
+          "actual": "yes",
+          "reasoning": "The code uses `@/` path aliases correctly for imports (e.g., `@/components/thinking-dots`, `@/providers/magent.provider`). It uses CSS custom properties via inline `style` props for design-token colors (e.g., `color: 'var(--foreground-muted)'`), and Tailwind utilities for layout/spacing (`className=\"flex items-center justify-between px-3 py-1.5\"`). The idioms are generally followed correctly, mixing Tailwind structural classes with CSS custom property colors appropriately."
+        },
+        {
+          "actual": "no",
+          "reasoning": "The code uses the `@/` path alias for all imports from `src/` (e.g., `@/components/thinking-dots`, `@/providers/magent.provider`), which is correct. CSS custom properties are properly used via inline `style` props for design-token colors (e.g., `color: 'var(--foreground-muted)'`). Tailwind utility classes are used for layout and structural properties (e.g., `className=\"px-8 py-6 overflow-auto h-full\"`), and inline styles are used for design tokens, following the idiom rules. The code correctly uses `interface` for object-shape types (`DocPreviewProps`). However, the CSS variable naming convention is violated with `var(--SurfaceRaised)` instead of `var(--surface-raised)`, which violates the \"Use CSS custom properties...via inline style props\" idiom when combined with the naming violation."
+        },
+        {
+          "actual": "yes",
+          "reasoning": "The code uses the `@/` path alias correctly for imports (`@/components/thinking-dots`, `@/providers/magent.provider`). CSS custom properties are used appropriately for colors via inline style props (though with incorrect casing—a naming issue, not an idiom issue). Layout/spacing uses Tailwind classes (`className=\"px-8 py-6 overflow-auto h-full\"`, `className=\"flex items-center gap-2\"`), which is correct. Error handling is not shown but no fetch calls or API violations are present. Type definitions use `interface` for object shapes as required. The code follows the stated idioms correctly."
+        }
+      ]
+    },
+    {
+      "diffKey": "0018-wrong-file-place-and-wrong-css-naming",
+      "criterion": "File Rules",
+      "split": "4-1",
+      "groundTruth": "yes",
+      "replicates": [
+        {
+          "actual": "yes",
+          "reasoning": "The file correctly begins with `'use client';` as its first line since it uses client-side React features (useState, useContext via useMagent hook). It exports the component as a named export (`export const DirectionView`), which is correct for non-app-directory files. The file does not import or use apiClient, so API file rules don't apply. All file-shape requirements are met."
+        },
+        {
+          "actual": "yes",
+          "reasoning": "The file correctly starts with `'use client';` since it uses client-side features like `useState`. The file exports the component as a named export (`export const DirectionView`), not as default, which is correct for non-App Router files in `src/`. The `DocPreview` sub-component is a private PascalCase constant not exported. All file-level rules are satisfied."
+        },
+        {
+          "actual": "yes",
+          "reasoning": "The file correctly has `'use client';` as the first line, appropriate since it uses `useState` and other client-only React features. The `DirectionView` is exported as a named export. However, the `DocPreview` component is also a React component using hooks (`useState`), yet it's a private sub-component within the file and is not exported, which is correct per conventions. The file structure complies with all file rules."
+        },
+        {
+          "actual": "no",
+          "reasoning": "The file has `'use client';` as the first line and uses client-side React features (useState, event handlers). It exports named exports (`DirectionView`), not defaults (except for Next.js route files, which this is not). However, the critical issue is that the `DocPreview` component is defined in a file now placed in `src/model/`, which is meant for type definitions only, not component implementations. Despite proper file-level rules for the main component, the file structure violation makes this problematic."
+        },
+        {
+          "actual": "yes",
+          "reasoning": "The file correctly has `'use client';` as its first line since it uses client-side React features (useState, event handlers). The main export `DirectionView` is a named export, not a default export, which is correct for a `src/` component file. The private sub-component `DocPreview` is defined as a PascalCase constant in the same file without export, which is the required pattern for module-level private sub-components."
+        }
+      ]
+    },
+    {
+      "diffKey": "0020-wrong-hook-naming-inside",
+      "criterion": "Code Idioms",
+      "split": "3-2",
+      "groundTruth": "yes",
+      "replicates": [
+        {
+          "actual": "no",
+          "reasoning": "The code uses the `@/` path alias consistently for imports from `src/` (e.g., `@/components/thinking-dots`, `@/providers/magent.provider`). It uses CSS custom properties via inline styles for design tokens (e.g., `var(--border)`, `var(--surface-raised)`). Layout properties use Tailwind classes (e.g., `className=\"flex\", \"px-3\", \"py-1.5\"`). However, the critical issue is the function call `UseMagent()` which is incorrect capitalization for a hook—it should be `useMagent()`. This violates the idiom of correct hook naming."
+        },
+        {
+          "actual": "yes",
+          "reasoning": "The code uses `@/` path aliases correctly for all imports (`@/components/thinking-dots`, `@/providers/magent.provider`). Design-token colors are applied via inline `style` props with CSS custom properties (e.g., `var(--border)`, `var(--foreground-muted)`). Layout and structural properties use Tailwind utilities (flex, px, py, gap, rounded, border-b). The code adheres to idiom rules for imports and styling patterns."
+        },
+        {
+          "actual": "yes",
+          "reasoning": "The code uses `@/` path aliases for imports (`@/components/thinking-dots`, `@/providers/magent.provider`), which is correct. CSS custom properties are used correctly via `var(--...)` for colors. Tailwind utilities are used for layout/spacing (`className=\"px-8 py-6\"`, `className=\"flex\"`, etc.). The error on line 89 (`UseMagent()` instead of `useMagent()`) is a violation of the camelCase idiom for hook usage, not of the general code idioms criteria, but the idioms themselves are otherwise correctly applied."
+        },
+        {
+          "actual": "yes",
+          "reasoning": "The code uses the `@/` path alias for all imports from `src/` (e.g., `@/components/thinking-dots`, `@/providers/magent.provider`). CSS custom properties are properly used via inline `style` props (e.g., `color: 'var(--foreground-muted)'`). Tailwind classes are used for layout and spacing (e.g., `className=\"flex items-center\"`). The code uses `interface` for object shapes (`DocPreviewProps`), which is correct. All idioms appear to be properly followed."
+        },
+        {
+          "actual": "no",
+          "reasoning": "The code correctly uses `@/` path aliases for imports (e.g., `@/components/thinking-dots`, `@/providers/magent.provider`), uses CSS custom properties via inline `style` props for design-token colors (e.g., `'var(--foreground-muted)'`), and uses Tailwind utilities for layout/spacing. However, the critical bug `UseMagent()` instead of `useMagent()` violates the hook naming idiom requirement. Additionally, the code follows the interface vs. type idiom correctly (using `interface DocPreviewProps`)."
+        }
+      ]
+    },
+    {
+      "diffKey": "0020-wrong-hook-naming-inside",
+      "criterion": "File Rules",
+      "split": "4-1",
+      "groundTruth": "yes",
+      "replicates": [
+        {
+          "actual": "yes",
+          "reasoning": "The file correctly has `'use client';` as its first line since it uses `useState` and other client-side features. The component is exported as a named export (`export const DirectionView`) rather than default. The file structure and exports comply with File Rules requirements."
+        },
+        {
+          "actual": "yes",
+          "reasoning": "The file has `'use client';` as its first line, which is required since it uses `useState` and other client-only React features. The component `DirectionView` is exported as a named export, which is correct per the rules. The private component `DocPreview` is defined as a PascalCase constant in the same file and not exported, which is compliant. All file-level requirements are met despite the function name error."
+        },
+        {
+          "actual": "yes",
+          "reasoning": "`'use client';` is correctly placed as the first line. The file exports the component as a named export (`export const DirectionView`), which is correct for `src/` files (not Next.js app route files). The `DocPreview` component is defined as a named constant in the same file and not exported, following the rule for private sub-components."
+        },
+        {
+          "actual": "yes",
+          "reasoning": "The file has `'use client';` as its first line (required for client-side React features like `useState`). The component is exported as a named export `export const DirectionView`, which complies with the rule that component files must export as named exports (not default). The `DocPreview` sub-component is not exported, which is correct for private sub-components."
+        },
+        {
+          "actual": "no",
+          "reasoning": "The file correctly has `'use client';` as its first line since it uses client-side React features (useState, event handlers). Both `DirectionView` and `DocPreview` are exported as named exports (not defaults), which is correct per conventions for non-Next.js route files. However, there is a critical bug: the code calls `UseMagent()` (PascalCase) instead of `useMagent()` (camelCase), which violates the hook naming requirement that exported hook functions must be camelCase. This is a runtime error that breaks the File Rules compliance regarding proper hook usage."
+        }
+      ]
+    },
+    {
+      "diffKey": "0020-wrong-hook-naming-inside",
+      "criterion": "Naming Conventions",
+      "split": "4-1",
+      "groundTruth": "no",
+      "replicates": [
+        {
+          "actual": "no",
+          "reasoning": "The file is named `direction.view.tsx` with the correct `.view.tsx` suffix for a view component. The component `DirectionView` is exported as `PascalCase`. The private sub-component `DocPreview` is `PascalCase` and not exported. The interface `DocPreviewProps` follows `PascalCase` naming. However, there is a critical error: the code calls `UseMagent()` on line ~95, which violates the hook naming convention that requires `camelCase` (should be `useMagent()`). This is a clear naming violation."
+        },
+        {
+          "actual": "no",
+          "reasoning": "File name `direction.view.tsx` is correct kebab-case with `.view.tsx` suffix. The interface `DocPreviewProps` uses PascalCase correctly. The private component `DocPreview` is PascalCase as required. However, there is a critical error on line 89: `UseMagent()` should be `useMagent()` (camelCase for custom hooks). This violates the naming convention for exported hook functions, which must be `camelCase` starting with `use`."
+        },
+        {
+          "actual": "no",
+          "reasoning": "File name `direction.view.tsx` follows the `.view.tsx` suffix rule correctly. The `DocPreview` component is `PascalCase`. The interface `DocPreviewProps` is `PascalCase` without `I` prefix. However, there is a critical error on line 89: `UseMagent()` should be `useMagent()` in camelCase as per the hook naming convention. This violates the rule that exported hook functions must be named with lowercase `use` prefix."
+        },
+        {
+          "actual": "no",
+          "reasoning": "The file is named `direction.view.tsx` (correct `.view.tsx` suffix), the component `DirectionView` uses PascalCase, the interface `DocPreviewProps` uses PascalCase, and the private sub-component `DocPreview` is PascalCase. However, there is a critical error on line 91: `UseMagent()` uses PascalCase when it should be `useMagent()` in camelCase per the hook naming rule 'Exported hook functions must be named with the `use` prefix in `camelCase`.'"
+        },
+        {
+          "actual": "yes",
+          "reasoning": "The file is named `direction.view.tsx` (correct `.view.tsx` suffix for view components). The component `DirectionView` uses PascalCase (correct for React components). The private sub-component `DocPreview` uses PascalCase as a constant (correct per conventions). The interface `DocPreviewProps` uses PascalCase without an `I` prefix (correct). All naming conventions are properly followed."
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Model identifier is a floating alias, not a pinned dated snapshot (see subject.modelPinned) — the exact underlying model version at run time is not recoverable from stored data.",
+    "Temperature/sampling parameters were never set or recorded by the judge call (see subject.temperatureNote) — consistency results reflect whatever the API default sampling behavior was at run time, which is itself unpinned.",
+    "criteriaVersion/promptVersion are resolved from the current conventionsJudgeSubjects source array by subjectKey, not stored on JudgeRun itself — if that array is edited later, re-exporting this same experimentId would silently report different values with no record of the change.",
+    "gitCommitSha reflects the repository state at export time, not necessarily the commit under which these JudgeRun rows were originally generated — there is no code-revision column on JudgeRun.",
+    "Replicate order within divergentCells is inferred from createdAt, not an explicit replicate-index column; ties or retried runs could reorder silently.",
+    "selfAgreementKappa chance-corrects against the judge's own marginal distribution, not an independent reference — this is circular by construction and only meaningful as a relative signal across criteria.",
+    "selfAgreementKappa is reported as null with an explanatory reason wherever a criterion's marginal is degenerate (all-yes or all-no) — treat values close to that boundary with the same skepticism.",
+    "majorityVoteAccuracy/sensitivity/specificity assume the diffs are independent draws (Clopper-Pearson); clusterBootstrapAgreement is the cluster-aware alternative and should be preferred wherever within-diff correlation is a concern.",
+    "A criterion with zero diffs in one ground-truth class (e.g. Code Idioms has no \"no\" labels in this dataset) reports that side as value:null rather than folding it into an average — check n before trusting any rate.",
+    "No token/cost accounting exists for judge runs in this schema; this export cannot report what the study cost to run.",
+    "Labeled diffs are not stored in the database and are not content-hashed in this export; editing fixtures/labeled-diffs/conventions/v2/*.ts without bumping a version would not be reflected here."
+  ]
+}
