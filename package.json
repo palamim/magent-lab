@@ -16,7 +16,8 @@
     "seed:subjects": "tsx src/lab/records/seed/seed-subjects.ts",
     "seed:criteria": "tsx src/lab/records/seed/seed-criteria.ts",
     "seed": "npm run seed:criteria && npm run seed:fixtures && npm run seed:subjects",
-    "report": "npx serve src/lab/records/reports"
+    "report": "npx serve src/lab/records/reports",
+    "test": "tsx --test src/lab/instruments/metrics/judge-stats.test.ts src/lab/records/reports/schemas/judge-study-export.schema.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.107.0",

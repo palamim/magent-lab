@@ -46,10 +46,22 @@ Other entry points:
 npm run generate:conventions        # run the architect agent against a repo (tsx .../generate-architect-run.ts <dir>)
 npm run script:write-conventions    # persist architect-generated conventions.md into a target repo's dir
 npm run report                      # serve src/lab/records/reports via `npx serve`
+npm test                            # node's built-in test runner via `tsx --test` — no Vitest/Jest
 ```
 
-There is no lint/test/build tooling configured (no ESLint/Vitest/Jest config, no `tsc` build script) — don't
-invent commands for these.
+Judge-regression analysis, offline over already-persisted data (require an `experimentId`, see below):
+
+```bash
+tsx src/lab/records/reports/judge-run-integrity.ts <experimentId>            # data-integrity gate
+tsx src/lab/records/reports/judge-consistency-validity.ts <experimentId>     # split histogram, kappa, CP CIs, cluster bootstrap
+tsx src/lab/records/reports/judge-reasoning-divergence.ts <experimentId>     # non-unanimous cells with reasoning side by side
+tsx src/lab/records/reports/judge-study-export.ts <experimentId>             # writes reports/output/study-<id>.json
+```
+
+There is no lint/build tooling configured (no ESLint config, no `tsc` build script) — don't invent commands for
+these. `npm test` exists but is narrowly scoped: it runs `node:test` (built-in, zero test-framework dependency)
+over the pure statistics module and the JSON Schema validator, both DB-free by design — it does not touch Postgres
+and is not a general test suite for the rest of the codebase.
 
 ## Architecture
 
@@ -69,12 +81,13 @@ src/lab/
       conventions/   # versioned criteria + prompt (criteria/*.v1.ts, *.v2.ts + prompt/*.v1.ts, *.v2.ts)
       plan/          # plan.judge.ts, plan.criteria.ts, plan.judge.prompt.ts
       tools/         # submit-gate-evaluation.tool.ts, submit-comparative-evaluation.tool.ts
-    metrics/         # cost.ts, agreement.ts
+    metrics/         # cost.ts, agreement.ts, judge-stats.ts (+ .test.ts) — pure, offline, no I/O
     clients/         # anthropic.ts — single Anthropic client singleton
   records/
     db/              # Prisma client + one repo file per model (named *.repo.ts, functions not classes)
     seed/            # seed-criteria.ts, seed-fixtures.ts, seed-subjects.ts (run in that order via `npm run seed`)
-    reports/         # analysis scripts, writing JSON output alongside themselves
+    reports/         # analysis scripts, writing JSON output alongside themselves (output/ is gitignored)
+      schemas/       # JSON Schema for study exports + a hand-rolled validator (see below)
   subjects/          # Subject definitions (agent × model × prompt)
     planner/
       prompts/       # One file per prompt variant: NNN-slug.prompt.ts
@@ -109,6 +122,38 @@ definitions are versioned and kept separate from prompts (e.g. `conventions.crit
 `conventions.criteria.v2.ts`, `conventions.prompt.v1.ts` vs `v2.ts`) so criteria/prompt changes can be evaluated
 against each other via judge-regression experiments (`run-judge-regression.ts` + labeled diffs in
 `fixtures/labeled-diffs/`). Judge model is `claude-haiku-4-5` — don't upgrade without an experiment justifying it.
+
+### Judge-regression analysis pipeline
+
+Analyzing a completed judge-regression experiment (5 replicate `JudgeRun` rows per labeled diff × criterion cell)
+is a separate, layered pipeline under `records/reports/`, built to be safe to run against real study data:
+
+1. **`judge-run-integrity.ts`** (`checkJudgeRunIntegrity`) — verifies every `(diffKey, criterion)` cell for a
+   given `experimentId` has exactly the expected replicate count, cross-checked against the actual fixture/criteria
+   source (not just whatever rows happen to exist in the DB, so a fully-missing diff is caught, not silently
+   skipped). **Every downstream analysis or report script gates on this and throws/refuses rather than analyzing
+   partial data** — never bypass or soften this gate to "just get a number out."
+2. **`judge-stats.ts`** (`instruments/metrics/`) — pure, offline statistics, no I/O: split-histogram consistency,
+   Fleiss' kappa self-agreement (explicit implementation, not a library — see its `KappaResult`'s `reason` field
+   for why it's `null`/uninformative near degenerate all-yes/all-no marginals), Clopper-Pearson exact binomial CIs
+   (implemented from scratch via the classic continued-fraction incomplete-beta algorithm — no stats dependency),
+   majority-vote validity (accuracy/sensitivity/specificity, each reporting `value: null` + a `reason` rather than
+   a coerced number when a ground-truth class has zero support), and a cluster bootstrap over `diffKey` (seeded
+   `mulberry32` PRNG, fully reproducible) that resamples whole diffs rather than individual runs, since the 5
+   replicates of one diff are correlated, not independent observations.
+3. **`judge-consistency-validity.ts`** / **`judge-reasoning-divergence.ts`** / **`judge-study-export.ts`** — thin
+   orchestration over `judge-stats.ts` + Prisma. `judge-study-export.ts` assembles a full study JSON (schema in
+   `reports/schemas/judge-study-export.schema.json`) — every number in it is a passthrough from `judge-stats.ts`
+   or `judge-consistency-validity.ts`, never recomputed or hardcoded in the exporter; only descriptive fields
+   (`limitations`, `temperatureNote`) are authored text.
+4. **`reports/schemas/validate-json-schema.ts`** — a minimal, hand-rolled JSON Schema (draft 2020-12 subset)
+   validator. `ajv` is present in `node_modules` only as an undeclared transitive dependency (via prisma tooling)
+   — don't import it directly, it can disappear on an unrelated dependency bump. Extend this validator rather
+   than reaching for a declared `ajv` dependency unless the schema's needs genuinely outgrow it.
+
+If you add a new `records/reports/*.ts` script that reads `JudgeRun` data, follow the same pattern: require
+`experimentId` as a parameter, gate on `checkJudgeRunIntegrity`, and keep any new pure math in `judge-stats.ts`
+(with hand-verified unit tests) rather than inline in the report script.
 
 ### Database conventions
 

@@ -1,0 +1,205 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://magent-lab.local/schemas/judge-study-export.schema.json",
+  "title": "Conventions Judge Study Export",
+  "description": "Shape emitted by src/lab/records/reports/judge-study-export.ts. Matches the StudyExport TypeScript interface exactly.",
+  "type": "object",
+  "required": [
+    "studyId",
+    "generatedAt",
+    "experimentId",
+    "gitCommitSha",
+    "subject",
+    "dataset",
+    "consistency",
+    "validity",
+    "divergentCells",
+    "limitations"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "studyId": { "type": "string" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "experimentId": { "type": "string" },
+    "gitCommitSha": { "type": "string" },
+    "subject": {
+      "type": "object",
+      "required": [
+        "subjectKey",
+        "model",
+        "modelPinned",
+        "criteriaVersion",
+        "promptVersion",
+        "temperature",
+        "temperatureNote"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "subjectKey": { "type": "string" },
+        "model": { "type": "string" },
+        "modelPinned": { "type": "boolean" },
+        "criteriaVersion": { "type": "integer" },
+        "promptVersion": { "type": "integer" },
+        "temperature": { "type": "null" },
+        "temperatureNote": { "type": "string" }
+      }
+    },
+    "dataset": {
+      "type": "object",
+      "required": ["nDiffs", "replicatesPerDiff", "classBalance"],
+      "additionalProperties": false,
+      "properties": {
+        "nDiffs": { "type": "integer" },
+        "replicatesPerDiff": { "type": "integer" },
+        "classBalance": { "type": "array", "items": { "$ref": "#/$defs/classBalanceEntry" } }
+      }
+    },
+    "consistency": {
+      "type": "object",
+      "required": ["splitHistogram", "perCriterion"],
+      "additionalProperties": false,
+      "properties": {
+        "splitHistogram": {
+          "type": "object",
+          "description": "Keys are '<majority>-<minority>' split labels, e.g. '5-0', '4-1', '3-2'; values are cell counts."
+        },
+        "perCriterion": { "type": "array", "items": { "$ref": "#/$defs/consistencyPerCriterion" } }
+      }
+    },
+    "validity": {
+      "type": "object",
+      "required": ["perCriterion"],
+      "additionalProperties": false,
+      "properties": {
+        "perCriterion": { "type": "array", "items": { "$ref": "#/$defs/validityPerCriterion" } }
+      }
+    },
+    "divergentCells": { "type": "array", "items": { "$ref": "#/$defs/divergentCell" } },
+    "limitations": { "type": "array", "items": { "type": "string" } }
+  },
+  "$defs": {
+    "interval": {
+      "type": "object",
+      "required": ["low", "high"],
+      "additionalProperties": false,
+      "properties": {
+        "low": { "type": "number", "minimum": 0, "maximum": 1 },
+        "high": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "measurableRate": {
+      "description": "Either a measured rate with a Clopper-Pearson CI, or an explicit not-measurable marker with a reason — never a bare number standing in for an unmeasurable case.",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["value", "n", "method", "ci"],
+          "additionalProperties": false,
+          "properties": {
+            "value": { "type": "number", "minimum": 0, "maximum": 1 },
+            "n": { "type": "integer", "minimum": 1 },
+            "method": { "const": "clopper-pearson" },
+            "ci": { "$ref": "#/$defs/interval" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["value", "n", "method", "reason"],
+          "additionalProperties": false,
+          "properties": {
+            "value": { "type": "null" },
+            "n": { "type": "integer", "minimum": 0, "maximum": 0 },
+            "method": { "const": "clopper-pearson" },
+            "reason": { "type": "string" }
+          }
+        }
+      ]
+    },
+    "clusterBootstrapAgreement": {
+      "type": "object",
+      "required": ["estimate", "nClusters", "ci", "method", "seed", "iterations"],
+      "additionalProperties": false,
+      "properties": {
+        "estimate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "nClusters": { "type": "integer", "minimum": 1 },
+        "ci": { "$ref": "#/$defs/interval" },
+        "method": { "const": "cluster-bootstrap" },
+        "seed": { "type": "integer" },
+        "iterations": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "classBalanceEntry": {
+      "type": "object",
+      "required": ["criterion", "noCount", "yesCount"],
+      "additionalProperties": false,
+      "properties": {
+        "criterion": { "type": "string" },
+        "noCount": { "type": "integer", "minimum": 0 },
+        "yesCount": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "consistencyPerCriterion": {
+      "description": "selfAgreementKappa is null with a reason wherever the criterion's marginal is degenerate (all-yes/all-no) — chance-corrected kappa is mathematically uninformative there, not just noisy.",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["criterion", "selfAgreementKappa"],
+          "additionalProperties": false,
+          "properties": {
+            "criterion": { "type": "string" },
+            "selfAgreementKappa": { "type": "number", "minimum": -1, "maximum": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["criterion", "selfAgreementKappa", "reason"],
+          "additionalProperties": false,
+          "properties": {
+            "criterion": { "type": "string" },
+            "selfAgreementKappa": { "type": "null" },
+            "reason": { "type": "string" }
+          }
+        }
+      ]
+    },
+    "validityPerCriterion": {
+      "type": "object",
+      "required": ["criterion", "majorityVoteAccuracy", "sensitivity", "specificity", "clusterBootstrapAgreement"],
+      "additionalProperties": false,
+      "properties": {
+        "criterion": { "type": "string" },
+        "majorityVoteAccuracy": { "$ref": "#/$defs/measurableRate" },
+        "sensitivity": {
+          "$ref": "#/$defs/measurableRate",
+          "description": "Recall on expected='no' (violation) diffs."
+        },
+        "specificity": {
+          "$ref": "#/$defs/measurableRate",
+          "description": "Recall on expected='yes' (compliant) diffs."
+        },
+        "clusterBootstrapAgreement": { "$ref": "#/$defs/clusterBootstrapAgreement" }
+      }
+    },
+    "replicate": {
+      "type": "object",
+      "required": ["actual", "reasoning"],
+      "additionalProperties": false,
+      "properties": {
+        "actual": { "enum": ["yes", "no"] },
+        "reasoning": { "type": "string" }
+      }
+    },
+    "divergentCell": {
+      "description": "A (diffKey, criterion) cell whose 5 replicates were NOT unanimous — 5-0 cells are excluded.",
+      "type": "object",
+      "required": ["diffKey", "criterion", "split", "groundTruth", "replicates"],
+      "additionalProperties": false,
+      "properties": {
+        "diffKey": { "type": "string" },
+        "criterion": { "type": "string" },
+        "split": { "type": "string", "pattern": "^[0-9]+-[0-9]+$" },
+        "groundTruth": { "enum": ["yes", "no"] },
+        "replicates": { "type": "array", "items": { "$ref": "#/$defs/replicate" } }
+      }
+    }
+  }
+}
