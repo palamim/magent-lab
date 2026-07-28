@@ -1,6 +1,6 @@
 {
   "studyId": "conventions-judge-regression-c0c23c78-312a-4aca-bc7c-38fa62b48ed9",
-  "generatedAt": "2026-07-28T16:34:39.447Z",
+  "generatedAt": "2026-07-28T16:49:02.840Z",
   "experimentId": "c0c23c78-312a-4aca-bc7c-38fa62b48ed9",
   "gitCommitSha": "a31c7e99aa11d6746a6fa3d86f0e9f46477f725d",
   "hypothesis": [
@@ -575,12 +575,12 @@
     "majorityVoteAccuracy/sensitivity/specificity assume the diffs are independent draws (Clopper-Pearson); clusterBootstrapAgreement is the cluster-aware alternative and should be preferred wherever within-diff correlation is a concern.",
     "Model identifier is a floating alias, not a pinned dated snapshot (see subject.modelPinned) — the exact underlying model version at run time is not recoverable from stored data.",
     "Temperature/sampling parameters were never set or recorded by the judge call (see subject.temperatureNote) — consistency results reflect whatever the API default sampling behavior was at run time, which is itself unpinned.",
-    "Replicate order within divergentCells is inferred from createdAt, not an explicit replicate-index column, so ties or retried runs could reorder silently — but no reported statistic (majority vote, kappa, cluster bootstrap) depends on replicate order in the first place; only the human-readable [1]..[5] numbering does, so don't read a narrative into which position said what.",
+    "Replicate order within divergentCells reflects insertion order (createdAt), not an explicit replicate-index column. In practice this is reliable — the runner calls the judge sequentially, not in parallel — but no reported statistic (majority vote, kappa, cluster bootstrap) depends on replicate order regardless: all three treat the 5 replicates as an unordered set. The judge has no memory between calls, so there is nothing for order to reveal even where it is guaranteed accurate — do not read a narrative into which position said what.",
     "selfAgreementKappa chance-corrects against the judge's own marginal distribution, not an independent reference — this is circular by construction and only meaningful as a relative signal across criteria.",
     "selfAgreementKappa is reported as null with an explanatory reason only when the judge's OWN observed answer marginal (not the ground-truth label marginal) is exactly degenerate (all-yes or all-no). A criterion whose ground truth is one-sided can still get a real, low, and misleadingly-looking-bad kappa if the judge itself produced even one dissenting answer — e.g. Code Idioms' ground truth is 100% \"yes\", but the judge's actual answers were 96%/4%, not exactly degenerate, so it reports a real kappa (0.22) instead of null. Treat any kappa near that boundary with the same skepticism as an explicit null.",
     "A criterion with zero diffs in one ground-truth class (e.g. Code Idioms has no \"no\" labels in this dataset) reports that side as value:null rather than folding it into an average — check n before trusting any rate.",
     "No token/cost accounting exists for judge runs in this schema; this export cannot report what the study cost to run.",
-    "Labeled diffs are not stored in the database and are not content-hashed in this export; editing fixtures/labeled-diffs/conventions/v2/*.ts without bumping a version would not be reflected here."
+    "Labeled diffs are not stored in the database, but gitCommitSha (captured per run) makes their content reconstructable — `git show <gitCommitSha>:<path>` shows exactly what a fixture contained when a given JudgeRun was generated. The one gap this does not cover: an uncommitted local edit to a fixture at the moment an experiment ran would be invisible, since gitCommitSha only reflects the last commit, not working-tree state."
   ],
   "conclusions": [
     "Validity: the judge is descriptively more sensitive to File Rules violations (100%, n=5) than Naming Conventions violations (77%, n=13), and descriptively more specific about Naming Conventions compliance (100%, n=7) than File Rules compliance (93%, n=15) — but at these sample sizes the Clopper-Pearson intervals overlap substantially (e.g. File Rules sensitivity: [48%, 100%]), so neither comparison should be read as a confident difference.",

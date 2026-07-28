@@ -62,10 +62,11 @@ const STUDY_LIMITATIONS: string[] = [
     'underlying model version at run time is not recoverable from stored data.',
   'Temperature/sampling parameters were never set or recorded by the judge call (see subject.temperatureNote) — ' +
     'consistency results reflect whatever the API default sampling behavior was at run time, which is itself unpinned.',
-  'Replicate order within divergentCells is inferred from createdAt, not an explicit replicate-index column, so ' +
-    "ties or retried runs could reorder silently — but no reported statistic (majority vote, kappa, cluster " +
-    'bootstrap) depends on replicate order in the first place; only the human-readable [1]..[5] numbering does, ' +
-    "so don't read a narrative into which position said what.",
+  'Replicate order within divergentCells reflects insertion order (createdAt), not an explicit replicate-index ' +
+    'column. In practice this is reliable — the runner calls the judge sequentially, not in parallel — but no ' +
+    'reported statistic (majority vote, kappa, cluster bootstrap) depends on replicate order regardless: all ' +
+    "three treat the 5 replicates as an unordered set. The judge has no memory between calls, so there is nothing " +
+    'for order to reveal even where it is guaranteed accurate — do not read a narrative into which position said what.',
   "selfAgreementKappa chance-corrects against the judge's own marginal distribution, not an independent " +
     'reference — this is circular by construction and only meaningful as a relative signal across criteria.',
   "selfAgreementKappa is reported as null with an explanatory reason only when the judge's OWN observed answer " +
@@ -77,8 +78,11 @@ const STUDY_LIMITATIONS: string[] = [
   'A criterion with zero diffs in one ground-truth class (e.g. Code Idioms has no "no" labels in this dataset) ' +
     'reports that side as value:null rather than folding it into an average — check n before trusting any rate.',
   'No token/cost accounting exists for judge runs in this schema; this export cannot report what the study cost to run.',
-  'Labeled diffs are not stored in the database and are not content-hashed in this export; editing ' +
-    'fixtures/labeled-diffs/conventions/v2/*.ts without bumping a version would not be reflected here.',
+  'Labeled diffs are not stored in the database, but gitCommitSha (captured per run) makes their content ' +
+    'reconstructable — `git show <gitCommitSha>:<path>` shows exactly what a fixture contained when a given ' +
+    'JudgeRun was generated. The one gap this does not cover: an uncommitted local edit to a fixture at the ' +
+    'moment an experiment ran would be invisible, since gitCommitSha only reflects the last commit, not ' +
+    'working-tree state.',
 ];
 
 // Authored by the study's builder after reviewing the results — same status as STUDY_HYPOTHESIS/STUDY_LIMITATIONS,
