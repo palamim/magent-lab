@@ -1,13 +1,13 @@
 {
   "studyId": "conventions-judge-regression-c0c23c78-312a-4aca-bc7c-38fa62b48ed9",
-  "generatedAt": "2026-07-28T13:16:20.561Z",
+  "generatedAt": "2026-07-28T15:53:55.750Z",
   "experimentId": "c0c23c78-312a-4aca-bc7c-38fa62b48ed9",
-  "gitCommitSha": "a380938d1591a8179dc76ccd623aea9fe0d27bdd",
+  "gitCommitSha": "56a92e1e30af02270993cceb45896bc7f3c38fec",
   "hypothesis": [
     "The judge agrees with human ground-truth labels at a rate better than chance, for each criterion independently (validity).",
     "The judge is self-consistent across repeated evaluations of the same diff — repeated judgments of an unchanged input converge on the same answer (consistency)."
   ],
-  "methodology": "One base code diff was tweaked to produce 20 variants, simulating a coding agent producing the same change with small variations. Each variant was then hand-labeled with the expected yes/no answer per criterion, producing 20 labeled diffs (fixtures). Each labeled diff was judged by subject \"conventions-judge-v2\" (model: claude-haiku-4-5, criteria v2, prompt v2) against 4 criteria (Structure and Placement Rules; Naming Conventions; File Rules; Code Idioms), 5 times each — 100 judge calls total (20 diffs × 5 replicates). Validity is measured against the human labels via Clopper-Pearson exact confidence intervals per criterion, plus a cluster-bootstrap agreement estimate (seed=42, 2000 iterations) that treats the 5 replicates of one diff as correlated, not independent. Since LLMs are judging LLMs, criteria are written to be as concrete, boolean, and unambiguous as possible, to keep the judge from hallucinating or being overly lenient.",
+  "methodology": "One base code diff was tweaked to produce 20 variants, simulating a coding agent producing the same change with small variations. Each variant was then hand-labeled with the expected yes/no answer per criterion, producing 20 labeled diffs (fixtures). Each labeled diff was judged by subject \"conventions-judge-v2\" (model: claude-haiku-4-5, criteria v2, prompt v2) against 4 criteria (Structure and Placement Rules; Naming Conventions; File Rules; Code Idioms), 5 times each — 100 judge calls total (20 diffs × 5 replicates).\n\nValidity is measured against the human labels via majority-vote accuracy, sensitivity, and specificity — each computed from a majority-vote verdict extracted per (diff, criterion) cell from its 5 replicates, all reported with Clopper-Pearson exact confidence intervals. Validity is also measured via a cluster-bootstrap agreement estimate (seed=42, 2000 iterations) that treats the 5 replicates of one diff as correlated, not independent.\n\nConsistency is measured via a split histogram of how unanimous the judge was across the 5 replicates, for each of the 80 cells (20 diffs × 4 criteria), alongside Fleiss' kappa to compress self-agreement into one chance-corrected number per criterion.",
   "subject": {
     "subjectKey": "conventions-judge-v2",
     "model": "claude-haiku-4-5",
@@ -583,5 +583,12 @@
     "A criterion with zero diffs in one ground-truth class (e.g. Code Idioms has no \"no\" labels in this dataset) reports that side as value:null rather than folding it into an average — check n before trusting any rate.",
     "No token/cost accounting exists for judge runs in this schema; this export cannot report what the study cost to run.",
     "Labeled diffs are not stored in the database and are not content-hashed in this export; editing fixtures/labeled-diffs/conventions/v2/*.ts without bumping a version would not be reflected here."
+  ],
+  "conclusions": [
+    "Validity: the judge is descriptively more sensitive to File Rules violations (100%, n=5) than Naming Conventions violations (77%, n=13), and descriptively more specific about Naming Conventions compliance (100%, n=7) than File Rules compliance (93%, n=15) — but at these sample sizes the Clopper-Pearson intervals overlap substantially (e.g. File Rules sensitivity: [48%, 100%]), so neither comparison should be read as a confident difference.",
+    "Validity: File Rules sensitivity is the most under-tested number in this study — a perfect point estimate resting on only 5 violation-labeled diffs, with a confidence interval wide enough to not rule out missing roughly half of real violations. More labeled File Rules violations are needed before trusting this number.",
+    "Consistency: the judge is mostly stable across repeated calls — 68 of 80 (diff, criterion) cells (85%) were perfectly unanimous across all 5 replicates.",
+    "Consistency: Fleiss' kappa shows Code Idioms has not actually been stress-tested — it aligns with all 20 fixtures being labeled \"yes\" for this criterion. This traces to how the dataset evolved: Code Idioms was added in criteria v2 (it does not exist in v1), and the v2 labeled diffs reused the same underlying code diffs as v1 — none were modified to introduce a genuine Code Idioms violation, so the criterion has zero negative examples.",
+    "Consistency: hand-reading the non-unanimous cells' reasoning shows real criterion-boundary ambiguity — e.g. diff 0020's `UseMagent()` hook-naming bug is labeled a Naming Conventions violation, but several judge replicates instead flagged it under Code Idioms or File Rules, producing split verdicts there too. This is a likely source of Code Idioms' and File Rules' lower kappa specifically — it does not explain Naming Conventions' own sensitivity shortfall, since all 3 of its non-unanimous cells were majority-correct; its actual 3 misses were unanimous wrong verdicts, which have no reasoning captured in this export (only non-unanimous cells are exported with replicate reasoning)."
   ]
 }

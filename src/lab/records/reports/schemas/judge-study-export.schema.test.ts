@@ -111,6 +111,9 @@ const validStudy: StudyExport = {
     'Model identifier is a floating alias, not a pinned dated snapshot.',
     'Temperature/sampling parameters were never set or recorded by the judge call.',
   ],
+  conclusions: [
+    'The judge is reliable on Structure and Placement Rules and Naming Conventions; Code Idioms results are inconclusive due to zero "no"-labeled diffs.',
+  ],
 };
 
 describe('judge-study-export.schema.json', () => {
@@ -132,6 +135,7 @@ describe('judge-study-export.schema.json', () => {
         'validity',
         'divergentCells',
         'limitations',
+        'conclusions',
       ]),
     );
   });

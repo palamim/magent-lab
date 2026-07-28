@@ -16,7 +16,8 @@
     "consistency",
     "validity",
     "divergentCells",
-    "limitations"
+    "limitations",
+    "conclusions"
   ],
   "additionalProperties": false,
   "properties": {
@@ -86,7 +87,12 @@
       }
     },
     "divergentCells": { "type": "array", "items": { "$ref": "#/$defs/divergentCell" } },
-    "limitations": { "type": "array", "items": { "type": "string" } }
+    "limitations": { "type": "array", "items": { "type": "string" } },
+    "conclusions": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Authored by the study's builder after reviewing the results — what this study actually found. Not derived from analysis."
+    }
   },
   "$defs": {
     "interval": {

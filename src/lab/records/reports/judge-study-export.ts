@@ -28,18 +28,29 @@ const buildStudyMethodology = (
   criteria: string[],
   bootstrapSeed: number,
   bootstrapIterations: number,
-): string =>
-  `One base code diff was tweaked to produce ${nDiffs} variants, simulating a coding agent producing the same ` +
-  `change with small variations. Each variant was then hand-labeled with the expected yes/no answer per ` +
-  `criterion, producing ${nDiffs} labeled diffs (fixtures). Each labeled diff was judged by subject ` +
-  `"${subject.key}" (model: ${subject.model}, criteria v${subject.criteriaVersion}, prompt v${subject.promptVersion}) ` +
-  `against ${criteria.length} criteria (${criteria.join('; ')}), ${replicatesPerDiff} times each — ` +
-  `${nDiffs * replicatesPerDiff} judge calls total (${nDiffs} diffs × ${replicatesPerDiff} replicates). Validity is ` +
-  `measured against the human labels via Clopper-Pearson exact confidence intervals per criterion, plus a ` +
-  `cluster-bootstrap agreement estimate (seed=${bootstrapSeed}, ${bootstrapIterations} iterations) that treats the ` +
-  `${replicatesPerDiff} replicates of one diff as correlated, not independent. Since LLMs are judging LLMs, ` +
-  `criteria are written to be as concrete, boolean, and unambiguous as possible, to keep the judge from ` +
-  `hallucinating or being overly lenient.`;
+): string => {
+  const setup =
+    `One base code diff was tweaked to produce ${nDiffs} variants, simulating a coding agent producing the same ` +
+    `change with small variations. Each variant was then hand-labeled with the expected yes/no answer per ` +
+    `criterion, producing ${nDiffs} labeled diffs (fixtures). Each labeled diff was judged by subject ` +
+    `"${subject.key}" (model: ${subject.model}, criteria v${subject.criteriaVersion}, prompt v${subject.promptVersion}) ` +
+    `against ${criteria.length} criteria (${criteria.join('; ')}), ${replicatesPerDiff} times each — ` +
+    `${nDiffs * replicatesPerDiff} judge calls total (${nDiffs} diffs × ${replicatesPerDiff} replicates).`;
+
+  const validity =
+    `Validity is measured against the human labels via majority-vote accuracy, sensitivity, and specificity — ` +
+    `each computed from a majority-vote verdict extracted per (diff, criterion) cell from its ${replicatesPerDiff} ` +
+    `replicates, all reported with Clopper-Pearson exact confidence intervals. Validity is also measured via a ` +
+    `cluster-bootstrap agreement estimate (seed=${bootstrapSeed}, ${bootstrapIterations} iterations) that treats ` +
+    `the ${replicatesPerDiff} replicates of one diff as correlated, not independent.`;
+
+  const consistency =
+    `Consistency is measured via a split histogram of how unanimous the judge was across the ${replicatesPerDiff} ` +
+    `replicates, for each of the ${nDiffs * criteria.length} cells (${nDiffs} diffs × ${criteria.length} criteria), ` +
+    `alongside Fleiss' kappa to compress self-agreement into one chance-corrected number per criterion.`;
+
+  return [setup, validity, consistency].join('\n\n');
+};
 
 // Descriptive, non-numeric provenance notes — these document what the schema does NOT
 // record, they are not measurements and are not derived from any analysis module.
@@ -67,6 +78,33 @@ const STUDY_LIMITATIONS: string[] = [
   'No token/cost accounting exists for judge runs in this schema; this export cannot report what the study cost to run.',
   'Labeled diffs are not stored in the database and are not content-hashed in this export; editing ' +
     'fixtures/labeled-diffs/conventions/v2/*.ts without bumping a version would not be reflected here.',
+];
+
+// Authored by the study's builder after reviewing the results — same status as STUDY_HYPOTHESIS/STUDY_LIMITATIONS,
+// not derived from any analysis module. Placeholder until filled in with the real conclusions.
+const STUDY_CONCLUSIONS: string[] = [
+  'Validity: the judge is descriptively more sensitive to File Rules violations (100%, n=5) than Naming ' +
+    'Conventions violations (77%, n=13), and descriptively more specific about Naming Conventions compliance ' +
+    '(100%, n=7) than File Rules compliance (93%, n=15) — but at these sample sizes the Clopper-Pearson ' +
+    'intervals overlap substantially (e.g. File Rules sensitivity: [48%, 100%]), so neither comparison should ' +
+    'be read as a confident difference.',
+  'Validity: File Rules sensitivity is the most under-tested number in this study — a perfect point estimate ' +
+    'resting on only 5 violation-labeled diffs, with a confidence interval wide enough to not rule out missing ' +
+    'roughly half of real violations. More labeled File Rules violations are needed before trusting this number.',
+  "Consistency: the judge is mostly stable across repeated calls — 68 of 80 (diff, criterion) cells (85%) were " +
+    'perfectly unanimous across all 5 replicates.',
+  "Consistency: Fleiss' kappa shows Code Idioms has not actually been stress-tested — it aligns with all 20 " +
+    'fixtures being labeled "yes" for this criterion. This traces to how the dataset evolved: Code Idioms was ' +
+    'added in criteria v2 (it does not exist in v1), and the v2 labeled diffs reused the same underlying code ' +
+    'diffs as v1 — none were modified to introduce a genuine Code Idioms violation, so the criterion has zero ' +
+    'negative examples.',
+  "Consistency: hand-reading the non-unanimous cells' reasoning shows real criterion-boundary ambiguity — e.g. " +
+    "diff 0020's `UseMagent()` hook-naming bug is labeled a Naming Conventions violation, but several judge " +
+    'replicates instead flagged it under Code Idioms or File Rules, producing split verdicts there too. This is ' +
+    "a likely source of Code Idioms' and File Rules' lower kappa specifically — it does not explain Naming " +
+    "Conventions' own sensitivity shortfall, since all 3 of its non-unanimous cells were majority-correct; its " +
+    'actual 3 misses were unanimous wrong verdicts, which have no reasoning captured in this export (only ' +
+    'non-unanimous cells are exported with replicate reasoning).',
 ];
 
 export interface StudyExport {
@@ -118,6 +156,7 @@ export interface StudyExport {
     replicates: { actual: Answer; reasoning: string }[];
   }[];
   limitations: string[];
+  conclusions: string[];
 }
 
 const getGitCommitSha = (): string => {
@@ -216,6 +255,7 @@ export const buildStudyExport = async (
       replicates: cell.replicates.map((r) => ({ actual: r.actual, reasoning: r.reasoning })),
     })),
     limitations: [...STUDY_LIMITATIONS],
+    conclusions: [...STUDY_CONCLUSIONS],
   };
 };
 
