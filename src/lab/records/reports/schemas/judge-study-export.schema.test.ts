@@ -22,6 +22,11 @@ const validStudy: StudyExport = {
   generatedAt: '2026-07-27T00:00:00.000Z',
   experimentId: 'test-experiment',
   gitCommitSha: 'abc1234',
+  hypothesis: [
+    'The judge agrees with human ground-truth labels at a rate better than chance, for each criterion independently (validity).',
+    'The judge is self-consistent across repeated evaluations of the same diff (consistency).',
+  ],
+  methodology: '20 labeled diffs, 5 replicates each, conventions-judge-v2 subject.',
   subject: {
     subjectKey: 'conventions-judge-v2',
     model: 'claude-haiku-4-5',
@@ -119,6 +124,8 @@ describe('judge-study-export.schema.json', () => {
         'generatedAt',
         'experimentId',
         'gitCommitSha',
+        'hypothesis',
+        'methodology',
         'subject',
         'dataset',
         'consistency',

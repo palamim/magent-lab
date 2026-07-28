@@ -1,8 +1,13 @@
 {
   "studyId": "conventions-judge-regression-c0c23c78-312a-4aca-bc7c-38fa62b48ed9",
-  "generatedAt": "2026-07-27T13:52:37.847Z",
+  "generatedAt": "2026-07-28T13:16:20.561Z",
   "experimentId": "c0c23c78-312a-4aca-bc7c-38fa62b48ed9",
-  "gitCommitSha": "d3ddd947a901f69ec2e3e3ee40ab0c218259f803",
+  "gitCommitSha": "a380938d1591a8179dc76ccd623aea9fe0d27bdd",
+  "hypothesis": [
+    "The judge agrees with human ground-truth labels at a rate better than chance, for each criterion independently (validity).",
+    "The judge is self-consistent across repeated evaluations of the same diff — repeated judgments of an unchanged input converge on the same answer (consistency)."
+  ],
+  "methodology": "One base code diff was tweaked to produce 20 variants, simulating a coding agent producing the same change with small variations. Each variant was then hand-labeled with the expected yes/no answer per criterion, producing 20 labeled diffs (fixtures). Each labeled diff was judged by subject \"conventions-judge-v2\" (model: claude-haiku-4-5, criteria v2, prompt v2) against 4 criteria (Structure and Placement Rules; Naming Conventions; File Rules; Code Idioms), 5 times each — 100 judge calls total (20 diffs × 5 replicates). Validity is measured against the human labels via Clopper-Pearson exact confidence intervals per criterion, plus a cluster-bootstrap agreement estimate (seed=42, 2000 iterations) that treats the 5 replicates of one diff as correlated, not independent. Since LLMs are judging LLMs, criteria are written to be as concrete, boolean, and unambiguous as possible, to keep the judge from hallucinating or being overly lenient.",
   "subject": {
     "subjectKey": "conventions-judge-v2",
     "model": "claude-haiku-4-5",

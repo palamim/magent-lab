@@ -8,7 +8,38 @@ import { prisma } from '@/lab/records/db/client';
 import { runConsistencyValidityAnalysis } from '@/lab/records/reports/judge-consistency-validity';
 import { findDivergentCells } from '@/lab/records/reports/judge-reasoning-divergence';
 import { conventionsJudgeSubjects } from '@/lab/subjects/judges/conventions-judge.subject';
+import type { JudgeSubject } from '@/lab/subjects/judges/conventions-judge.subject';
 import type { Answer, MeasurableRate, ClusterBootstrapResult } from '@/lab/instruments/metrics/judge-stats';
+
+// Authored by the study's builder, not derived from any analysis module — same status as
+// STUDY_LIMITATIONS below.
+const STUDY_HYPOTHESIS: string[] = [
+  'The judge agrees with human ground-truth labels at a rate better than chance, for each criterion independently (validity).',
+  'The judge is self-consistent across repeated evaluations of the same diff — repeated judgments of an unchanged input converge on the same answer (consistency).',
+];
+
+// Interpolates the subject/dataset facts (subject key, model, criteria & prompt version, diff/replicate
+// counts, criteria names, bootstrap params) so this stays accurate whichever experimentId/subject is
+// exported — the narrative prose is authored, but the facts inside it are never hardcoded.
+const buildStudyMethodology = (
+  subject: JudgeSubject,
+  nDiffs: number,
+  replicatesPerDiff: number,
+  criteria: string[],
+  bootstrapSeed: number,
+  bootstrapIterations: number,
+): string =>
+  `One base code diff was tweaked to produce ${nDiffs} variants, simulating a coding agent producing the same ` +
+  `change with small variations. Each variant was then hand-labeled with the expected yes/no answer per ` +
+  `criterion, producing ${nDiffs} labeled diffs (fixtures). Each labeled diff was judged by subject ` +
+  `"${subject.key}" (model: ${subject.model}, criteria v${subject.criteriaVersion}, prompt v${subject.promptVersion}) ` +
+  `against ${criteria.length} criteria (${criteria.join('; ')}), ${replicatesPerDiff} times each — ` +
+  `${nDiffs * replicatesPerDiff} judge calls total (${nDiffs} diffs × ${replicatesPerDiff} replicates). Validity is ` +
+  `measured against the human labels via Clopper-Pearson exact confidence intervals per criterion, plus a ` +
+  `cluster-bootstrap agreement estimate (seed=${bootstrapSeed}, ${bootstrapIterations} iterations) that treats the ` +
+  `${replicatesPerDiff} replicates of one diff as correlated, not independent. Since LLMs are judging LLMs, ` +
+  `criteria are written to be as concrete, boolean, and unambiguous as possible, to keep the judge from ` +
+  `hallucinating or being overly lenient.`;
 
 // Descriptive, non-numeric provenance notes — these document what the schema does NOT
 // record, they are not measurements and are not derived from any analysis module.
@@ -26,7 +57,7 @@ const STUDY_LIMITATIONS: string[] = [
     'ties or retried runs could reorder silently.',
   "selfAgreementKappa chance-corrects against the judge's own marginal distribution, not an independent " +
     'reference — this is circular by construction and only meaningful as a relative signal across criteria.',
-  'selfAgreementKappa is reported as null with an explanatory reason wherever a criterion\'s marginal is ' +
+  "selfAgreementKappa is reported as null with an explanatory reason wherever a criterion's marginal is " +
     'degenerate (all-yes or all-no) — treat values close to that boundary with the same skepticism.',
   'majorityVoteAccuracy/sensitivity/specificity assume the diffs are independent draws (Clopper-Pearson); ' +
     'clusterBootstrapAgreement is the cluster-aware alternative and should be preferred wherever within-diff ' +
@@ -43,6 +74,8 @@ export interface StudyExport {
   generatedAt: string;
   experimentId: string;
   gitCommitSha: string;
+  hypothesis: string[];
+  methodology: string;
   subject: {
     subjectKey: string;
     model: string;
@@ -59,11 +92,14 @@ export interface StudyExport {
   };
   consistency: {
     splitHistogram: Record<string, number>;
-    perCriterion: ({ criterion: string; selfAgreementKappa: number } | {
-      criterion: string;
-      selfAgreementKappa: null;
-      reason: string;
-    })[];
+    perCriterion: (
+      | { criterion: string; selfAgreementKappa: number }
+      | {
+          criterion: string;
+          selfAgreementKappa: null;
+          reason: string;
+        }
+    )[];
   };
   validity: {
     perCriterion: {
@@ -99,6 +135,8 @@ export const buildStudyExport = async (
   experimentId: string,
   options: { bootstrapSeed?: number; bootstrapIterations?: number; expectedRunsPerDiff?: number } = {},
 ): Promise<StudyExport> => {
+  const bootstrapSeed = options.bootstrapSeed ?? 42;
+  const bootstrapIterations = options.bootstrapIterations ?? 2000;
   const analysis = await runConsistencyValidityAnalysis(experimentId, options);
   const { divergentCells } = await findDivergentCells(experimentId, options.expectedRunsPerDiff ?? 5);
 
@@ -139,6 +177,15 @@ export const buildStudyExport = async (
     generatedAt: new Date().toISOString(),
     experimentId,
     gitCommitSha: getGitCommitSha(),
+    hypothesis: [...STUDY_HYPOTHESIS],
+    methodology: buildStudyMethodology(
+      subjectConfig,
+      analysis.nDiffs,
+      analysis.replicatesPerDiff,
+      analysis.perCriterion.map((c) => c.criterion),
+      bootstrapSeed,
+      bootstrapIterations,
+    ),
     subject: {
       subjectKey: analysis.subjectKey,
       model: modelRow.model,

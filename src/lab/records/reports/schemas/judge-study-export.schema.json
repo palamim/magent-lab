@@ -9,6 +9,8 @@
     "generatedAt",
     "experimentId",
     "gitCommitSha",
+    "hypothesis",
+    "methodology",
     "subject",
     "dataset",
     "consistency",
@@ -22,6 +24,15 @@
     "generatedAt": { "type": "string", "format": "date-time" },
     "experimentId": { "type": "string" },
     "gitCommitSha": { "type": "string" },
+    "hypothesis": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Authored by the study's builder — one entry per claim this study expects to find and why. Not derived from analysis."
+    },
+    "methodology": {
+      "type": "string",
+      "description": "Authored by the study's builder — how the study was run. Not derived from analysis."
+    },
     "subject": {
       "type": "object",
       "required": [
