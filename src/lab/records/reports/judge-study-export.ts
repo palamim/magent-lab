@@ -1,14 +1,11 @@
 import 'dotenv/config';
 
-import { execSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 import { prisma } from '@/lab/records/db/client';
 import { runConsistencyValidityAnalysis } from '@/lab/records/reports/judge-consistency-validity';
 import { findDivergentCells } from '@/lab/records/reports/judge-reasoning-divergence';
-import { conventionsJudgeSubjects } from '@/lab/subjects/judges/conventions-judge.subject';
-import type { JudgeSubject } from '@/lab/subjects/judges/conventions-judge.subject';
 import type { Answer, MeasurableRate, ClusterBootstrapResult } from '@/lab/instruments/metrics/judge-stats';
 
 // Authored by the study's builder, not derived from any analysis module — same status as
@@ -22,7 +19,10 @@ const STUDY_HYPOTHESIS: string[] = [
 // counts, criteria names, bootstrap params) so this stays accurate whichever experimentId/subject is
 // exported — the narrative prose is authored, but the facts inside it are never hardcoded.
 const buildStudyMethodology = (
-  subject: JudgeSubject,
+  subjectKey: string,
+  model: string,
+  criteriaVersion: number,
+  promptVersion: number,
   nDiffs: number,
   replicatesPerDiff: number,
   criteria: string[],
@@ -33,7 +33,7 @@ const buildStudyMethodology = (
     `One base code diff was tweaked to produce ${nDiffs} variants, simulating a coding agent producing the same ` +
     `change with small variations. Each variant was then hand-labeled with the expected yes/no answer per ` +
     `criterion, producing ${nDiffs} labeled diffs (fixtures). Each labeled diff was judged by subject ` +
-    `"${subject.key}" (model: ${subject.model}, criteria v${subject.criteriaVersion}, prompt v${subject.promptVersion}) ` +
+    `"${subjectKey}" (model: ${model}, criteria v${criteriaVersion}, prompt v${promptVersion}) ` +
     `against ${criteria.length} criteria (${criteria.join('; ')}), ${replicatesPerDiff} times each — ` +
     `${nDiffs * replicatesPerDiff} judge calls total (${nDiffs} diffs × ${replicatesPerDiff} replicates).`;
 
@@ -55,24 +55,25 @@ const buildStudyMethodology = (
 // Descriptive, non-numeric provenance notes — these document what the schema does NOT
 // record, they are not measurements and are not derived from any analysis module.
 const STUDY_LIMITATIONS: string[] = [
+  'majorityVoteAccuracy/sensitivity/specificity assume the diffs are independent draws (Clopper-Pearson); ' +
+    'clusterBootstrapAgreement is the cluster-aware alternative and should be preferred wherever within-diff ' +
+    'correlation is a concern.',
   'Model identifier is a floating alias, not a pinned dated snapshot (see subject.modelPinned) — the exact ' +
     'underlying model version at run time is not recoverable from stored data.',
   'Temperature/sampling parameters were never set or recorded by the judge call (see subject.temperatureNote) — ' +
     'consistency results reflect whatever the API default sampling behavior was at run time, which is itself unpinned.',
-  'criteriaVersion/promptVersion are resolved from the current conventionsJudgeSubjects source array by subjectKey, ' +
-    'not stored on JudgeRun itself — if that array is edited later, re-exporting this same experimentId would ' +
-    'silently report different values with no record of the change.',
-  'gitCommitSha reflects the repository state at export time, not necessarily the commit under which these ' +
-    'JudgeRun rows were originally generated — there is no code-revision column on JudgeRun.',
-  'Replicate order within divergentCells is inferred from createdAt, not an explicit replicate-index column; ' +
-    'ties or retried runs could reorder silently.',
+  'Replicate order within divergentCells is inferred from createdAt, not an explicit replicate-index column, so ' +
+    "ties or retried runs could reorder silently — but no reported statistic (majority vote, kappa, cluster " +
+    'bootstrap) depends on replicate order in the first place; only the human-readable [1]..[5] numbering does, ' +
+    "so don't read a narrative into which position said what.",
   "selfAgreementKappa chance-corrects against the judge's own marginal distribution, not an independent " +
     'reference — this is circular by construction and only meaningful as a relative signal across criteria.',
-  "selfAgreementKappa is reported as null with an explanatory reason wherever a criterion's marginal is " +
-    'degenerate (all-yes or all-no) — treat values close to that boundary with the same skepticism.',
-  'majorityVoteAccuracy/sensitivity/specificity assume the diffs are independent draws (Clopper-Pearson); ' +
-    'clusterBootstrapAgreement is the cluster-aware alternative and should be preferred wherever within-diff ' +
-    'correlation is a concern.',
+  "selfAgreementKappa is reported as null with an explanatory reason only when the judge's OWN observed answer " +
+    "marginal (not the ground-truth label marginal) is exactly degenerate (all-yes or all-no). A criterion whose " +
+    'ground truth is one-sided can still get a real, low, and misleadingly-looking-bad kappa if the judge itself ' +
+    "produced even one dissenting answer — e.g. Code Idioms' ground truth is 100% \"yes\", but the judge's actual " +
+    'answers were 96%/4%, not exactly degenerate, so it reports a real kappa (0.22) instead of null. Treat any ' +
+    'kappa near that boundary with the same skepticism as an explicit null.',
   'A criterion with zero diffs in one ground-truth class (e.g. Code Idioms has no "no" labels in this dataset) ' +
     'reports that side as value:null rather than folding it into an average — check n before trusting any rate.',
   'No token/cost accounting exists for judge runs in this schema; this export cannot report what the study cost to run.',
@@ -159,14 +160,6 @@ export interface StudyExport {
   conclusions: string[];
 }
 
-const getGitCommitSha = (): string => {
-  try {
-    return execSync('git rev-parse HEAD').toString().trim();
-  } catch {
-    return 'unknown';
-  }
-};
-
 /** True if the model string carries a dated snapshot suffix (e.g. gpt-5.4-2026-03-05), false for floating aliases. */
 const looksPinned = (model: string): boolean => /\d{4}-\d{2}-\d{2}/.test(model);
 
@@ -179,15 +172,14 @@ export const buildStudyExport = async (
   const analysis = await runConsistencyValidityAnalysis(experimentId, options);
   const { divergentCells } = await findDivergentCells(experimentId, options.expectedRunsPerDiff ?? 5);
 
-  const modelRow = await prisma.judgeRun.findFirst({ where: { experimentId }, select: { model: true } });
-  if (!modelRow) throw new Error(`No JudgeRun rows found for experiment "${experimentId}".`);
-
-  const subjectConfig = conventionsJudgeSubjects.find((s) => s.key === analysis.subjectKey);
-  if (!subjectConfig) {
-    throw new Error(
-      `No known JudgeSubject config for subjectKey "${analysis.subjectKey}" — cannot resolve criteriaVersion/promptVersion.`,
-    );
-  }
+  // Provenance (model, criteria/prompt version, git commit) is read straight from the JudgeRun rows
+  // themselves — captured at insert time by runJudgeRegression — not re-derived from current code
+  // state, so it can't silently drift if the subjects array or checked-out commit changes later.
+  const runRow = await prisma.judgeRun.findFirst({
+    where: { experimentId },
+    select: { model: true, criteriaVersion: true, promptVersion: true, gitCommitSha: true },
+  });
+  if (!runRow) throw new Error(`No JudgeRun rows found for experiment "${experimentId}".`);
 
   const classBalance = analysis.perCriterion.map((c) => ({
     criterion: c.criterion,
@@ -215,10 +207,13 @@ export const buildStudyExport = async (
     studyId: `conventions-judge-regression-${experimentId}`,
     generatedAt: new Date().toISOString(),
     experimentId,
-    gitCommitSha: getGitCommitSha(),
+    gitCommitSha: runRow.gitCommitSha,
     hypothesis: [...STUDY_HYPOTHESIS],
     methodology: buildStudyMethodology(
-      subjectConfig,
+      analysis.subjectKey,
+      runRow.model,
+      runRow.criteriaVersion,
+      runRow.promptVersion,
       analysis.nDiffs,
       analysis.replicatesPerDiff,
       analysis.perCriterion.map((c) => c.criterion),
@@ -227,10 +222,10 @@ export const buildStudyExport = async (
     ),
     subject: {
       subjectKey: analysis.subjectKey,
-      model: modelRow.model,
-      modelPinned: looksPinned(modelRow.model),
-      criteriaVersion: subjectConfig.criteriaVersion,
-      promptVersion: subjectConfig.promptVersion,
+      model: runRow.model,
+      modelPinned: looksPinned(runRow.model),
+      criteriaVersion: runRow.criteriaVersion,
+      promptVersion: runRow.promptVersion,
       temperature: null,
       temperatureNote:
         'not recorded — runJudge() does not set a temperature parameter on the Anthropic call; the API default applies and is itself unpinned',

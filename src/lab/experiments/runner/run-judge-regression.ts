@@ -2,6 +2,7 @@ import { anthropic } from '@/lab/instruments/clients/anthropic';
 import { runConventionsJudge } from '@/lab/instruments/judges/conventions/conventions.judge';
 import { checkAgreement } from '@/lab/instruments/metrics/agreement';
 import { recordJudgeRun } from '@/lab/records/db/judge-runs.repo';
+import { getGitCommitSha } from '@/lib/git';
 import type { LabeledDiff } from '@/lab/fixtures/labeled-diffs/labeled-diff.types';
 import type { JudgeSubject } from '@/lab/subjects/judges/conventions-judge.subject';
 
@@ -11,6 +12,10 @@ export const runJudgeRegression = async (
   experimentId: string,
   runsPerDiff: number,
 ): Promise<void> => {
+  // Captured once per experiment run, not per judge call — the commit doesn't change mid-run,
+  // and shelling out to git ~100 times would be pure waste.
+  const gitCommitSha = getGitCommitSha();
+
   for (const diff of diffs) {
     for (let i = 0; i < runsPerDiff; i++) {
       const t0 = Date.now();
@@ -31,6 +36,9 @@ export const runJudgeRegression = async (
         subjectKey: subject.key,
         diffKey: diff.key,
         model: subject.model,
+        criteriaVersion: subject.criteriaVersion,
+        promptVersion: subject.promptVersion,
+        gitCommitSha,
         latencyMs,
         allMatched,
         agreements,

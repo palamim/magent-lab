@@ -28,15 +28,18 @@ enum CriterionCategory {
 }
 
 model JudgeRun {
-  id           String   @id @default(uuid())
-  createdAt    DateTime @default(now())
-  experimentId String
-  subjectKey   String // which judge config
-  diffKey      String // which labeled diff
-  model        String
-  latencyMs    Int
-  allMatched   Boolean // did every criterion match ground truth?
-  agreements   Json // [{ criterion, expected, actual, matched }]
+  id              String   @id @default(uuid())
+  createdAt       DateTime @default(now())
+  experimentId    String
+  subjectKey      String // which judge config
+  diffKey         String // which labeled diff
+  model           String
+  criteriaVersion Int
+  promptVersion   Int
+  gitCommitSha    String
+  latencyMs       Int
+  allMatched      Boolean // did every criterion match ground truth?
+  agreements      Json // [{ criterion, expected, actual, matched }]
 
   @@index([experimentId])
   @@index([subjectKey])
