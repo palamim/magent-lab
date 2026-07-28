@@ -18,7 +18,7 @@ The lab is organized around the primitives of an experiment. Everything in
 | **Criterion**  | The encoded definition of quality — versioned `gate` (pass/fail) or `comparative` (A-vs-B) standards.         |
 | **Experiment** | The protocol — which subjects run against which fixtures, and how many replicates.                            |
 | **Run**        | A single trial — one subject producing output over one fixture, with behavior, cost, and evaluation recorded. |
-| **Record**     | The lab notebook — Postgres-backed persistence (`db`), `seed`s, and `reports`.                                |
+| **Record**     | The lab notebook — Postgres-backed persistence (`db`) and `reports`.                                          |
 
 ## Setup
 
@@ -26,7 +26,6 @@ The lab is organized around the primitives of an experiment. Everything in
 docker compose up -d          # Postgres
 npm install
 npm run db:migrate            # apply schema
-npm run seed                  # criteria, fixtures, subjects
 ```
 
 Requires `.env` with `ANTHROPIC_API_KEY`, `DATABASE_URL`, and `PROJECTS_DIR`
@@ -37,8 +36,9 @@ Requires `.env` with `ANTHROPIC_API_KEY`, `DATABASE_URL`, and `PROJECTS_DIR`
 Experiments are defined in `src/lab/experiments/definitions/`. Run one directly:
 
 ```bash
-tsx src/lab/experiments/definitions/0001-baseline-vs-deliverables.ts
+tsx src/lab/experiments/definitions/0004-conventions-judge-regression.ts
 ```
 
-Every run, gate result, and comparison is persisted. Inspect the notebook with
+Fixtures and subjects for judge-regression experiments live in code (no
+seeding needed). Every `JudgeRun` is persisted. Inspect the notebook with
 `npm run db:studio`.

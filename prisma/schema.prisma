@@ -19,126 +19,12 @@ enum AgentType {
   architect
 }
 
-/**
- * FIXTURE: Controlled (frozen) inputs.
- */
-model Fixture {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-
-  key         String
-  agentType   AgentType
-  description String?
-  dir         String
-  input       Json
-
-  runs Run[]
-
-  @@unique([key, agentType])
-  @@index([agentType])
-}
-
-/**
- * SUBJECT: The component that's being tested.
- */
-model Subject {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-
-  key         String
-  agentType   AgentType
-  model       String
-  prompt      String
-  description String?
-
-  runs Run[]
-
-  @@unique([key, agentType])
-  @@index([agentType])
-  @@index([model])
-}
-
-/**
- * CRITERION: How agents are actually evaluated.
- */
-model Criterion {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-
-  name        String // 'Grounded', 'Executable', ...
-  description String // the exact wording used
-  agentType   AgentType
-  kind        CriterionKind // gate | comparative
-  version     Int
-
-  gateResults GateResult[]
-
-  @@unique([name, version, agentType])
-  @@index([agentType])
-  @@index([name])
-}
-
-enum CriterionKind {
-  gate
-  comparative
-}
-
 enum CriterionCategory {
   PROJECT_CONVENTIONS
   FUNCTIONAL_CORRECTNESS
   CODE_QUALITY
   SAFETY_SECURITY
   TESTING_DOCUMENTATION
-}
-
-/**
- * RUN: A single execution event.
- */
-model Run {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-
-  // fixture
-  fixture   Fixture @relation(fields: [fixtureId], references: [id])
-  fixtureId String
-
-  // subject
-  subject   Subject @relation(fields: [subjectId], references: [id])
-  subjectId String
-  prompt    String // The exact full built prompt used
-  model     String // 'claude-haiku-4-5', ...
-
-  // experiment
-  experiment   Experiment @relation(fields: [experimentId], references: [id])
-  experimentId String
-
-  // agent behavior
-  steps         Int // agent loop iterations
-  toolCalls     Int // total tool calls
-  readFileCalls Int // how many read_file calls
-  filesRead     Json // which files it chose to read
-
-  // cost & latency
-  latencyMs    Int
-  inputTokens  Int
-  outputTokens Int
-  costUsd      Decimal @db.Decimal(10, 6)
-
-  // output
-  output Json
-
-  // --- EVALUATION ---
-
-  // gates
-  gateResults    GateResult[]
-  allGatesPassed Boolean
-
-  // comparisons
-  comparisonsAsA Comparison[] @relation("ComparisonRunA")
-  comparisonsAsB Comparison[] @relation("ComparisonRunB")
-
-  @@index([subjectId])
-  @@index([fixtureId])
 }
 
 model JudgeRun {
@@ -182,57 +68,6 @@ model AgentRun {
 }
 
 /**
- * GATE: A single gate criterion result.
- */
-model GateResult {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-
-  run         Run       @relation(fields: [runId], references: [id], onDelete: Cascade)
-  runId       String
-  criterion   Criterion @relation(fields: [criterionId], references: [id])
-  criterionId String
-  passed      Boolean
-  reasoning   String
-
-  @@index([runId])
-  @@index([criterionId])
-  @@index([passed])
-}
-
-/**
- * COMPARISON: A head-to-head comparison of two plans (the comparison phase).
- */
-model Comparison {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-
-  runA   Run    @relation("ComparisonRunA", fields: [runAId], references: [id])
-  runAId String
-  runB   Run    @relation("ComparisonRunB", fields: [runBId], references: [id])
-  runBId String
-
-  winner         Verdict
-  decidedBy      DecidedBy
-  positionBiased Boolean
-  reasoning      Json
-
-  @@index([runAId])
-  @@index([runBId])
-}
-
-enum Verdict {
-  A
-  B
-  tie
-}
-
-enum DecidedBy {
-  gate
-  comparison
-}
-
-/**
  * EXPERIMENT: the orchestrator of evaluations (decides which combinations, how many times)
  */
 model Experiment {
@@ -240,6 +75,4 @@ model Experiment {
   createdAt DateTime @default(now())
 
   description String
-
-  runs Run[]
 }

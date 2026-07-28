@@ -18,7 +18,7 @@ The domain vocabulary matters — the whole codebase is organized around these p
 | **Criterion**  | The encoded definition of quality — versioned `gate` (pass/fail) or `comparative` (A-vs-B) standards.     |
 | **Experiment** | The protocol — which subjects run against which fixtures, and how many replicates.                       |
 | **Run**        | A single trial — one subject producing output over one fixture, with behavior, cost, and eval recorded.  |
-| **Record**     | The lab notebook — Postgres-backed persistence (`db`), `seed`s, and `reports`.                            |
+| **Record**     | The lab notebook — Postgres-backed persistence (`db`) and `reports`.                                     |
 
 ## Commands
 
@@ -27,7 +27,6 @@ docker compose up -d          # start Postgres
 npm install
 npm run db:migrate            # apply Prisma schema (prisma migrate dev)
 npm run db:generate           # regenerate Prisma client after schema changes
-npm run seed                  # seed criteria, then fixtures, then subjects (order matters)
 npm run db:studio             # inspect the DB visually
 ```
 
@@ -37,7 +36,7 @@ projects that fixtures point at).
 Run a single experiment directly with `tsx` (no build step):
 
 ```bash
-tsx src/lab/experiments/definitions/0001-baseline-vs-deliverables.ts
+tsx src/lab/experiments/definitions/0004-conventions-judge-regression.ts
 ```
 
 Other entry points:
@@ -70,50 +69,52 @@ and is not a general test suite for the rest of the codebase.
 ```
 src/lab/
   experiments/
-    definitions/     # One file per experiment: NNNN-description.ts (e.g. 0001-baseline-vs-deliverables.ts)
-    runner/          # generate-run, gate-run, compare-runs — orchestration only, no inline DB/LLM calls
-    api/             # Thin wrappers that call out to actual agent generation (planner, architect)
+    definitions/     # One file per experiment: NNNN-description.ts (e.g. 0004-conventions-judge-regression.ts)
+    runner/          # run-judge-regression.ts, generate-architect-run.ts — orchestration only, no inline DB/LLM calls
+    api/             # conventions.api.ts — thin wrapper that calls out to the architect agent
     run-experiment.ts  # experiment() wrapper — creates the Experiment row, ensures prisma.$disconnect()
-  fixtures/          # Fixture types + generators; frozen snapshots of real project state at seed time
-    planner/         # Planner-specific fixture definitions
+  fixtures/
+    labeled-diffs/     # Frozen, human-labeled code diffs used as judge-regression fixtures
+      conventions/v1/, v2/  # One file per labeled diff + a shared _conventions.ts + index.ts barrel
+      labeled-diff.types.ts
   instruments/
     judges/          # LLM judges (tool-calling with forced tool_choice for structured output)
       conventions/   # versioned criteria + prompt (criteria/*.v1.ts, *.v2.ts + prompt/*.v1.ts, *.v2.ts)
-      plan/          # plan.judge.ts, plan.criteria.ts, plan.judge.prompt.ts
       tools/         # submit-gate-evaluation.tool.ts, submit-comparative-evaluation.tool.ts
+      types/         # shared judge types (GateEvaluation, ComparativeEvaluation, Criterion, Verdict)
+      run-judge.ts   # shared tool-calling harness for judge LLM calls
     metrics/         # cost.ts, agreement.ts, judge-stats.ts (+ .test.ts) — pure, offline, no I/O
     clients/         # anthropic.ts — single Anthropic client singleton
   records/
-    db/              # Prisma client + one repo file per model (named *.repo.ts, functions not classes)
-    seed/            # seed-criteria.ts, seed-fixtures.ts, seed-subjects.ts (run in that order via `npm run seed`)
+    db/              # Prisma client + one repo file per model still in use (judge-runs, agent-runs, experiments)
     reports/         # analysis scripts, writing JSON output alongside themselves (output/ is gitignored)
       schemas/       # JSON Schema for study exports + a hand-rolled validator (see below)
   subjects/          # Subject definitions (agent × model × prompt)
-    planner/
-      prompts/       # One file per prompt variant: NNN-slug.prompt.ts
+    judges/          # conventions-judge.subject.ts — judge subject configs (criteria/prompt version pairs)
   types/             # Shared enums (AgentType, TaskStatus) and type aliases
 src/lib/             # General utilities: files.ts, projects.ts (repo-key resolution)
 src/scripts/         # One-off runnable scripts (write-conventions.ts)
-prisma/schema.prisma # Source of truth for the DB shape — see model comments for the Fixture/Subject/Run/etc mapping
+prisma/schema.prisma # Source of truth for the DB shape — JudgeRun, AgentRun, Experiment are the live models
 ```
 
 ### The experiment pipeline
 
-Every experiment definition in `experiments/definitions/` follows the same shape: wrap the body in `experiment()`
-(handles `Experiment` row creation + `prisma.$disconnect()`), then for each fixture/subject combination:
+Every experiment definition in `experiments/definitions/` wraps its body in `experiment()` (handles `Experiment`
+row creation + `prisma.$disconnect()`). The current experiments are judge-regression runs (0004, 0005):
 
-1. **`generate*Run`** (`runner/generate-run.ts`) — loads the fixture + subject from DB, builds the prompt via
-   `buildPrompt()` (replaces `{{variableName}}` template vars), calls the agent, persists a `Run` row with full
-   behavior/cost/latency metrics.
-2. **`gate*Run`** (`runner/gate-run.ts`) — runs a judge against the output, maps judge answers to seeded
-   `Criterion` ids, persists `GateResult` rows, and flips `Run.allGatesPassed`.
-3. **`compare*Runs`** (`runner/compare-runs.ts`) — for comparative evaluation, runs the judge twice (forward and
-   swapped A/B order) to detect position bias; if either side failed its gate, the comparison is decided by gate
-   rather than by judge.
+- **`runJudgeRegression`** (`runner/run-judge-regression.ts`) — for each labeled diff × `runsPerDiff` replicates,
+  runs the conventions judge (`runConventionsJudge`) against the diff, checks the judge's answers against the
+  diff's human-labeled `expected` outcome (`checkAgreement`), and persists one `JudgeRun` row per replicate.
 
-Fixtures and subjects are **not** constructed inline in experiment files — they're string keys (`fixtureKey`,
-`subjectKey`) resolved against DB rows that were populated by the seed scripts. This keeps experiment definitions
-declarative and makes runs reproducible from seeded state.
+Fixtures (`fixtures/labeled-diffs/`) and subjects (`subjects/judges/conventions-judge.subject.ts`) are **not**
+DB-backed — they're plain in-code arrays/objects imported directly into the experiment definition. `JudgeRun`
+only stores their `diffKey`/`subjectKey` as strings, so nothing needs seeding before a judge-regression experiment
+can run. `0003-code-diff.ts` is a similar but one-off, unpersisted script — it runs a single judge call and prints
+the result, without wrapping in `experiment()` or writing to the DB.
+
+Separately, `generateArchitectRun` (`runner/generate-architect-run.ts`, driven by `npm run generate:conventions`)
+runs the architect agent against a real repo and persists an `AgentRun` row — it doesn't go through `experiment()`
+or touch `Fixture`/`Subject`/`Criterion` at all.
 
 ### Judges
 
@@ -160,10 +161,10 @@ If you add a new `records/reports/*.ts` script that reads `JudgeRun` data, follo
 - One repo file per Prisma model under `src/lab/records/db/`, named exports only, no classes.
 - Use `prisma.$queryRaw` for aggregate/GROUP BY queries Prisma's builder can't express; normalize any `BigInt`
   results to `Number` before serializing to JSON.
-- Always call `prisma.$disconnect()` in top-level scripts (seeds, experiment entry points) — the `experiment()`
+- Always call `prisma.$disconnect()` in top-level scripts (experiment entry points, one-off scripts) — the `experiment()`
   wrapper already does this for experiment definitions.
-- The `AgentType` enum (`director`, `executor`, `planner`, `architect`) is the discriminator threaded through
-  `Fixture`, `Subject`, and `Criterion` — most repo queries filter or key on it.
+- The `AgentType` enum (`director`, `executor`, `planner`, `architect`) is a shared discriminator type; in the DB
+  it's currently only stored on `AgentRun.agentType`.
 
 ### Style
 
