@@ -55,6 +55,10 @@ const buildStudyMethodology = (
 // Descriptive, non-numeric provenance notes — these document what the schema does NOT
 // record, they are not measurements and are not derived from any analysis module.
 const STUDY_LIMITATIONS: string[] = [
+  'All 20 labeled diffs are variants of a single base diff on a single project, hand-labeled by a single person ' +
+    '(the study author) — there is no inter-rater reliability check, and the dataset does not sample across ' +
+    'different projects, diff styles, or authors. Validity numbers reflect agreement with one person’s judgment ' +
+    'on one code change, not a general notion of ground truth.',
   'majorityVoteAccuracy/sensitivity/specificity assume the diffs are independent draws (Clopper-Pearson); ' +
     'clusterBootstrapAgreement is the cluster-aware alternative and should be preferred wherever within-diff ' +
     'correlation is a concern.',

@@ -1,6 +1,6 @@
 {
   "studyId": "conventions-judge-regression-c0c23c78-312a-4aca-bc7c-38fa62b48ed9",
-  "generatedAt": "2026-07-28T16:49:02.840Z",
+  "generatedAt": "2026-07-30T17:51:37.603Z",
   "experimentId": "c0c23c78-312a-4aca-bc7c-38fa62b48ed9",
   "gitCommitSha": "a31c7e99aa11d6746a6fa3d86f0e9f46477f725d",
   "hypothesis": [
@@ -572,6 +572,7 @@
     }
   ],
   "limitations": [
+    "All 20 labeled diffs are variants of a single base diff on a single project, hand-labeled by a single person (the study author) — there is no inter-rater reliability check, and the dataset does not sample across different projects, diff styles, or authors. Validity numbers reflect agreement with one person’s judgment on one code change, not a general notion of ground truth.",
     "majorityVoteAccuracy/sensitivity/specificity assume the diffs are independent draws (Clopper-Pearson); clusterBootstrapAgreement is the cluster-aware alternative and should be preferred wherever within-diff correlation is a concern.",
     "Model identifier is a floating alias, not a pinned dated snapshot (see subject.modelPinned) — the exact underlying model version at run time is not recoverable from stored data.",
     "Temperature/sampling parameters were never set or recorded by the judge call (see subject.temperatureNote) — consistency results reflect whatever the API default sampling behavior was at run time, which is itself unpinned.",
