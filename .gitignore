@@ -12,3 +12,6 @@ node_modules
 
 # experiments reports
 /src/lab/records/reports/output
+
+# macOS
+.DS_Store

@@ -1,5 +1,5 @@
 import type { Criterion } from '@/lab/instruments/judges/types/common.types';
-import { CriterionCategory } from '@/lab/records/db/generated/prisma/client';
+import { CriterionCategory } from '@/lab/records/db/generated/prisma/enums';
 
 /**
  * CRITERIA: How agents are actually evaluated.

@@ -1,4 +1,4 @@
-import type { CriterionCategory } from '@/lab/records/db/generated/prisma/client';
+import type { CriterionCategory } from '@/lab/records/db/generated/prisma/enums';
 
 export type GateAnswer = 'yes' | 'no';
 
